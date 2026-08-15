@@ -104,7 +104,8 @@ h2 { font-size: clamp(1.8rem, 9vw, 3.4rem); line-height: 1.05; }
   flex-direction: column;
   justify-content: center;
   background:
-    linear-gradient(150deg, rgba(20, 38, 31, .24), rgba(10, 26, 20, .84)),
+    linear-gradient(150deg, rgba(20, 38, 31, .18), rgba(10, 26, 20, .88)),
+    radial-gradient(circle at 78% 18%, rgba(241,189,69,.16), transparent 22rem),
     repeating-linear-gradient(90deg, transparent 0 18px, rgba(255,255,255,.03) 18px 19px),
     var(--field);
 }
@@ -218,14 +219,20 @@ blockquote { margin: 1.2rem 0; padding-left: 1rem; border-left: 3px solid var(--
   display: grid;
   grid-template-columns: 1fr auto 1fr;
   align-items: center;
-  padding: .75rem 1rem;
+  padding: .85rem 1rem;
   border-radius: 1rem 1rem 0 0;
   color: var(--ink);
-  background: var(--cream);
+  background:
+    linear-gradient(180deg, #fffdf2, #f3e7c2 70%, #e8d7a8);
   text-align: center;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.65),
+    0 8px 18px rgba(0,0,0,.18);
+  position: relative;
+  z-index: 2;
 }
 .game-scoreboard div:first-child, .game-scoreboard div:last-child { display: flex; justify-content: space-between; align-items: center; gap: .4rem; }
-.game-scoreboard strong { font-size: 1.8rem; }
+.game-scoreboard strong { font-size: 1.8rem; text-shadow: 0 1px 0 rgba(255,255,255,.55); }
 #away-name { color: var(--player-team); }
 #home-name { color: var(--opponent-team); }
 #away-name, #home-name {
@@ -256,18 +263,30 @@ blockquote { margin: 1.2rem 0; padding-left: 1rem; border-left: 3px solid var(--
   letter-spacing: .08em;
 }
 .ballpark[data-mode="pitch"] .sweet-spot {
-  background: rgba(80, 170, 255, .28);
+  background: rgba(80, 170, 255, .34);
+  box-shadow: 0 0 18px rgba(90, 170, 255, .35);
 }
 
 .ballpark {
   position: relative;
-  min-height: 20rem;
+  min-height: 22rem;
   overflow: hidden;
   background:
-    linear-gradient(165deg, transparent 58%, var(--dirt) 58% 82%, #9c512f 82%),
-    repeating-linear-gradient(0deg, rgba(255,255,255,.035) 0 2px, transparent 2px 10px),
-    linear-gradient(#132b27 0 24%, #296443 24%);
+    linear-gradient(165deg, transparent 56%, var(--dirt) 58% 80%, #9c512f 82%),
+    repeating-linear-gradient(0deg, rgba(255,255,255,.04) 0 2px, transparent 2px 11px),
+    linear-gradient(#0d1f28 0 18%, #1d4d36 18% 52%, #2a6a46 52%);
   border-radius: 0 0 1rem 1rem;
+  isolation: isolate;
+}
+.ballpark::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse at 50% 18%, rgba(255, 236, 170, .18), transparent 42%),
+    radial-gradient(ellipse at 50% 100%, rgba(0,0,0,.28), transparent 55%);
+  pointer-events: none;
+  z-index: 0;
 }
 .ballpark::after {
   content: "";
@@ -276,25 +295,124 @@ blockquote { margin: 1.2rem 0; padding-left: 1rem; border-left: 3px solid var(--
   inset: auto 8% 0;
   height: 38%;
   background: url("assets/baseball-pack/field-lines.png") center bottom / contain no-repeat;
-  opacity: .34;
+  opacity: .42;
+  pointer-events: none;
+  mix-blend-mode: soft-light;
+}
+.stadium-sky {
+  position: absolute;
+  inset: 0 0 70%;
+  background:
+    radial-gradient(circle at 18% 40%, rgba(255,220,140,.2), transparent 28%),
+    radial-gradient(circle at 82% 35%, rgba(255,220,140,.16), transparent 26%),
+    linear-gradient(#0a1822, #143043 70%, transparent);
   pointer-events: none;
 }
-.ballpark[data-result="homeRun"] { box-shadow: inset 0 0 0 3px var(--gold); }
-.ballpark[data-result="hit"] .hit-burst { opacity: 1; animation: burst .55s ease-out; }
-.ballpark[data-result="out"] { filter: saturate(.75); }
+.crowd {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 12%;
+  height: 14%;
+  background:
+    radial-gradient(circle at 8% 70%, #1b2430 0 10%, transparent 11%),
+    radial-gradient(circle at 16% 80%, #243041 0 9%, transparent 12%),
+    radial-gradient(circle at 24% 65%, #1a2634 0 11%, transparent 12%),
+    radial-gradient(circle at 33% 78%, #223247 0 10%, transparent 12%),
+    radial-gradient(circle at 42% 68%, #1c2838 0 10%, transparent 12%),
+    radial-gradient(circle at 52% 76%, #243447 0 11%, transparent 12%),
+    radial-gradient(circle at 61% 66%, #1a2534 0 10%, transparent 12%),
+    radial-gradient(circle at 71% 78%, #223145 0 10%, transparent 12%),
+    radial-gradient(circle at 80% 70%, #1d2a3a 0 11%, transparent 12%),
+    radial-gradient(circle at 90% 74%, #243447 0 10%, transparent 12%);
+  opacity: .85;
+  pointer-events: none;
+  animation: crowdPulse 2.8s ease-in-out infinite;
+}
+.outfield-wall {
+  position: absolute;
+  left: 6%;
+  right: 6%;
+  top: 20%;
+  height: 9%;
+  border: 2px solid rgba(20, 28, 24, .55);
+  border-radius: .35rem;
+  background:
+    linear-gradient(180deg, rgba(255,255,255,.08), transparent 40%),
+    repeating-linear-gradient(90deg, #2f6b4a 0 12%, #255a3d 12% 24%);
+  box-shadow: 0 8px 16px rgba(0,0,0,.25);
+  display: grid;
+  place-items: center;
+  z-index: 1;
+}
+.outfield-wall span {
+  color: #fff8df;
+  font-size: .72rem;
+  font-weight: 900;
+  letter-spacing: .28em;
+  text-shadow: 0 1px 0 rgba(0,0,0,.45);
+}
+@keyframes crowdPulse {
+  0%, 100% { transform: translateY(0); opacity: .8; }
+  50% { transform: translateY(-1px); opacity: .95; }
+}
+
+.ballpark.shake {
+  animation: parkShake .42s cubic-bezier(.2,.8,.2,1);
+}
+.ballpark[data-result="homeRun"] {
+  box-shadow: inset 0 0 0 3px var(--gold), inset 0 0 48px rgba(241,189,69,.22);
+}
+.ballpark[data-result="homeRun"] .crowd {
+  animation: crowdCheer .55s ease-out;
+}
+.ballpark[data-result="hit"] .hit-burst,
+.ballpark[data-result="homeRun"] .hit-burst { opacity: 1; animation: burst .55s ease-out; }
+.ballpark[data-result="out"] { filter: saturate(.82) brightness(.96); }
+.ballpark[data-result="strikeout"] { filter: saturate(.9); }
+@keyframes parkShake {
+  0%, 100% { transform: translate(0, 0); }
+  20% { transform: translate(-3px, 1px); }
+  40% { transform: translate(3px, -2px); }
+  60% { transform: translate(-2px, 2px); }
+  80% { transform: translate(2px, 0); }
+}
+@keyframes crowdCheer {
+  0%, 100% { transform: translateY(0) scale(1); }
+  40% { transform: translateY(-4px) scale(1.02); }
+}
 
 .lights {
-  height: 24%;
+  position: absolute;
+  inset: 0 0 55%;
+  pointer-events: none;
   background:
-    radial-gradient(circle at 18% 80%, rgba(255,248,223,.28), transparent 28%),
-    radial-gradient(circle at 82% 80%, rgba(255,248,223,.28), transparent 28%),
-    repeating-linear-gradient(90deg, transparent 0 12%, rgba(255,248,223,.15) 12% 13%);
+    radial-gradient(ellipse 18% 55% at 16% 8%, rgba(255,248,223,.55), transparent 70%),
+    radial-gradient(ellipse 18% 55% at 84% 8%, rgba(255,248,223,.55), transparent 70%),
+    radial-gradient(ellipse 28% 40% at 50% 0%, rgba(255,236,170,.22), transparent 72%);
+  z-index: 1;
 }
+.lights::before,
+.lights::after {
+  content: "";
+  position: absolute;
+  top: 2%;
+  width: .55rem;
+  height: .55rem;
+  border-radius: 50%;
+  background: #fff8df;
+  box-shadow:
+    0 0 10px 4px rgba(255,248,223,.65),
+    0 0 28px 10px rgba(241,189,69,.28);
+}
+.lights::before { left: 15%; }
+.lights::after { right: 15%; }
 .outfield-haze {
   position: absolute;
   inset: 18% 0 42%;
-  background: linear-gradient(180deg, transparent, rgba(8, 28, 20, .18));
+  background: linear-gradient(180deg, transparent, rgba(8, 28, 20, .22));
   pointer-events: none;
+  z-index: 1;
 }
 .cartoon-player {
   --skin: #f3b27f;
@@ -361,15 +479,7 @@ blockquote { margin: 1.2rem 0; padding-left: 1rem; border-left: 3px solid var(--
   transform-origin: 50% 90%;
 }
 .player-head::after {
-  content: "";
-  position: absolute;
-  left: 16%;
-  bottom: 7%;
-  width: 22%;
-  height: 10%;
-  border-bottom: 2px solid #773e31;
-  border-radius: 50%;
-  transform: rotate(8deg);
+  content: none;
 }
 .player-cap {
   left: -6%;
@@ -383,50 +493,192 @@ blockquote { margin: 1.2rem 0; padding-left: 1rem; border-left: 3px solid var(--
 .player-cap::after {
   content: "";
   position: absolute;
-  right: -22%;
-  bottom: -6%;
-  width: 55%;
-  height: 28%;
   border: 2px solid var(--outline);
-  border-radius: 50%;
   background: var(--uniform-color, var(--team));
-  transform: rotate(5deg);
+}
+/* Pitcher faces home / camera: bill toward us */
+.facing-home .player-cap::after {
+  left: 50%;
+  bottom: -22%;
+  width: 72%;
+  height: 34%;
+  border-radius: 45%;
+  transform: translateX(-50%);
+}
+.facing-home .player-ear.left-ear {
+  left: -10%;
+  right: auto;
+  top: 48%;
+}
+.facing-home .player-ear.right-ear {
+  left: auto;
+  right: -10%;
+  top: 48%;
+}
+/* Batter faces mound: clear profile looking left toward pitcher */
+.facing-mound .player-cap::after {
+  left: -40%;
+  right: auto;
+  bottom: 2%;
+  width: 68%;
+  height: 34%;
+  border-radius: 50%;
+  transform: rotate(-36deg);
+}
+.facing-mound .player-ear {
+  left: auto;
+  right: -12%;
+  top: 46%;
+}
+.facing-mound .player-face {
+  left: 28%;
+  top: 32%;
+  width: 1.1rem;
+}
+.facing-mound .player-face::before {
+  /* near eye toward pitcher */
+  left: .05rem;
+  width: .42rem;
+  height: .46rem;
+}
+.facing-mound .player-face::after {
+  /* hide far eye — true profile read */
+  display: none;
+}
+.facing-mound .player-face b {
+  left: 28%;
+  top: .48rem;
+}
+.facing-mound .player-face b::after {
+  width: .5rem;
+  left: 60%;
+}
+.facing-mound .player-head {
+  left: 6%;
+  width: 68%;
+  transform: rotate(-12deg);
+}
+.facing-mound .player-body {
+  left: 28%;
+  width: 46%;
+  transform: skewX(-6deg) rotate(-3deg);
+  transform-origin: 50% 100%;
+}
+.facing-mound .player-body::after {
+  /* buttons along the front (toward pitcher) */
+  inset: 18% auto auto 8%;
+}
+/* Lefty batter mirrors toward mound (looking right) */
+.batter.lefty.facing-mound .player-cap::after {
+  left: auto;
+  right: -40%;
+  transform: rotate(36deg);
+}
+.batter.lefty.facing-mound .player-ear {
+  left: -12%;
+  right: auto;
+}
+.batter.lefty.facing-mound .player-face {
+  left: 72%;
+  width: 1.1rem;
+}
+.batter.lefty.facing-mound .player-face::before {
+  display: none;
+}
+.batter.lefty.facing-mound .player-face::after {
+  display: block;
+  right: .05rem;
+  width: .42rem;
+  height: .46rem;
+  opacity: 1;
+}
+.batter.lefty.facing-mound .player-face b {
+  left: 72%;
+  top: .48rem;
+}
+.batter.lefty.facing-mound .player-face b::after {
+  width: .5rem;
+  left: 40%;
+}
+.batter.lefty.facing-mound .player-head {
+  left: auto;
+  right: 6%;
+  width: 68%;
+  transform: rotate(12deg);
+}
+.batter.lefty.facing-mound .player-body {
+  left: auto;
+  right: 28%;
+  width: 46%;
+  transform: skewX(6deg) rotate(3deg);
+}
+.batter.lefty.facing-mound .player-body::after {
+  inset: 18% 8% auto auto;
+  left: auto;
 }
 .player-face {
-  right: 16%;
-  top: 45%;
-  width: .32rem;
+  left: 50%;
+  top: 38%;
+  width: 1.35rem;
+  height: 1.15rem;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  transform: translateX(-50%);
+}
+.player-face::before {
+  content: "";
+  position: absolute;
+  left: .12rem;
+  top: .08rem;
+  width: .34rem;
   height: .42rem;
   border-radius: 50%;
   background: var(--outline);
+  box-shadow: inset -.08rem -.08rem 0 -.12rem #fff;
 }
 .player-face::after {
   content: "";
   position: absolute;
-  right: -.45rem;
-  top: .05rem;
-  width: .26rem;
-  height: .38rem;
+  right: .12rem;
+  top: .08rem;
+  width: .34rem;
+  height: .42rem;
   border-radius: 50%;
   background: var(--outline);
+  box-shadow: inset -.08rem -.08rem 0 -.12rem #fff;
 }
 .player-face b {
   position: absolute;
-  left: .08rem;
-  top: .05rem;
-  width: .1rem;
-  height: .1rem;
+  left: 50%;
+  top: .52rem;
+  width: .2rem;
+  height: .16rem;
   border-radius: 50%;
-  background: white;
+  background: var(--skin-shadow);
+  transform: translateX(-50%);
+  box-shadow: none;
+}
+.player-face b::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: .22rem;
+  width: .72rem;
+  height: .28rem;
+  border-bottom: 2px solid #773e31;
+  border-radius: 50%;
+  transform: translateX(-50%);
 }
 .player-ear {
-  left: -10%;
-  top: 49%;
-  width: 20%;
+  left: -8%;
+  top: 52%;
+  width: 16%;
   aspect-ratio: 1;
   border: 2px solid var(--outline);
   border-radius: 50%;
   background: var(--skin-shadow);
+  z-index: -1;
 }
 .player-leg {
   bottom: 0;
@@ -448,8 +700,6 @@ blockquote { margin: 1.2rem 0; padding-left: 1rem; border-left: 3px solid var(--
   border-radius: 70% 30% 30% 45%;
   background: #2a332f;
 }
-.back-leg { left: 25%; }
-.front-leg { right: 20%; }
 .player-arm {
   width: 18%;
   height: 43%;
@@ -458,6 +708,8 @@ blockquote { margin: 1.2rem 0; padding-left: 1rem; border-left: 3px solid var(--
   background: linear-gradient(var(--uniform) 0 58%, var(--skin) 59%);
   transform-origin: 50% 12%;
 }
+
+/* —— Pitcher: faces home plate (camera) —— */
 .pitcher {
   left: calc(50% - 2rem);
   top: 25%;
@@ -466,26 +718,39 @@ blockquote { margin: 1.2rem 0; padding-left: 1rem; border-left: 3px solid var(--
   transform-origin: 50% 90%;
   animation: pitcherIdle 1.8s ease-in-out infinite;
 }
-.pitcher .glove-arm {
-  left: 12%;
-  top: 40%;
-  transform: rotate(-44deg);
+.pitcher .plant-leg {
+  left: 18%;
+  transform: rotate(-4deg);
+}
+.pitcher .stride-leg {
+  right: 14%;
+  transform: rotate(6deg);
 }
 .pitcher .throw-arm {
-  right: 8%;
-  top: 38%;
-  transform: rotate(38deg);
+  /* pitcher's right arm = viewer's left, set at chest */
+  left: 18%;
+  top: 40%;
+  transform: rotate(12deg);
+  z-index: 2;
+}
+.pitcher .glove-arm {
+  /* pitcher's left glove = viewer's right, covering ball */
+  left: auto;
+  right: 16%;
+  top: 42%;
+  transform: rotate(-18deg);
+  z-index: 3;
 }
 .mini-glove {
-  left: -42%;
-  bottom: -12%;
-  width: 150%;
+  left: -20%;
+  bottom: -18%;
+  width: 160%;
   aspect-ratio: 1;
   border: 2px solid var(--outline);
   border-radius: 58% 42% 55% 45%;
   background: #9f542f;
 }
-.ballpark[data-mode="pitch"][data-result=""] .pitcher .front-leg {
+.ballpark[data-mode="pitch"][data-result=""] .pitcher .stride-leg {
   animation: legLift 1.25s ease-in-out infinite;
 }
 .ballpark[data-mode="bat"][data-result=""] .pitcher,
@@ -505,38 +770,67 @@ blockquote { margin: 1.2rem 0; padding-left: 1rem; border-left: 3px solid var(--
   animation: headNod .72s ease both;
 }
 @keyframes pitcherIdle {
-  0%, 100% { transform: translateY(0) rotate(-1deg); }
-  50% { transform: translateY(-2px) rotate(1deg); }
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-2px); }
 }
 @keyframes legLift {
   0%, 100% { transform: translate(0, 0) rotate(0); }
-  42%, 68% { transform: translate(-.25rem, -.58rem) rotate(-52deg); }
+  42%, 68% { transform: translate(.2rem, -.55rem) rotate(48deg); }
 }
 @keyframes pitcherThrow {
-  0% { transform: translate(0, 0) rotate(-2deg); }
-  22% { transform: translate(-.12rem, -.1rem) rotate(-7deg); }
-  48% { transform: translate(.12rem, -.22rem) rotate(5deg); }
-  68% { transform: translate(.5rem, .06rem) rotate(13deg); }
-  100% { transform: translate(.42rem, .12rem) rotate(9deg); }
+  0% { transform: translate(0, 0) rotate(0); }
+  22% { transform: translate(0, -.08rem) rotate(-3deg); }
+  48% { transform: translate(0, -.2rem) rotate(2deg); }
+  68% { transform: translate(0, .1rem) rotate(4deg); }
+  100% { transform: translate(0, .14rem) rotate(2deg); }
 }
 @keyframes throwArm {
-  0% { transform: rotate(38deg); }
-  26% { transform: rotate(104deg); }
-  52% { transform: rotate(-82deg); }
-  72%, 100% { transform: rotate(-198deg); }
+  0% { transform: rotate(12deg); }
+  24% { transform: rotate(-56deg) translate(-.12rem, -.25rem); }
+  48% { transform: rotate(6deg) translate(.04rem, .12rem); }
+  72%, 100% { transform: rotate(98deg) translate(.18rem, .38rem); }
 }
 @keyframes gloveTuck {
-  0%, 20% { transform: rotate(-44deg); }
-  55% { transform: translate(.3rem, .15rem) rotate(24deg); }
-  100% { transform: translate(.46rem, .35rem) rotate(68deg); }
+  0%, 20% { transform: rotate(-18deg); }
+  55% { transform: translate(-.18rem, .08rem) rotate(-4deg); }
+  100% { transform: translate(-.3rem, .3rem) rotate(22deg); }
 }
 @keyframes headNod {
-  0%, 22% { transform: rotate(-3deg); }
-  52% { transform: rotate(-8deg); }
-  100% { transform: rotate(6deg); }
+  0%, 22% { transform: rotate(0); }
+  52% { transform: rotate(-4deg); }
+  100% { transform: rotate(3deg); }
 }
-.strike-zone { position: absolute; z-index: 2; left: calc(50% - 2.6rem); top: 47%; width: 5.2rem; height: 6.4rem; border: 2px solid rgba(255,255,255,.55); box-shadow: inset 0 0 18px rgba(255,255,255,.08); }
-.sweet-spot { position: absolute; inset: 38% 0; background: rgba(241,189,69,.2); }
+.strike-zone {
+  position: absolute;
+  z-index: 2;
+  left: calc(50% - 2.6rem);
+  top: 47%;
+  width: 5.2rem;
+  height: 6.4rem;
+  border: 2px solid rgba(255,255,255,.62);
+  box-shadow:
+    inset 0 0 22px rgba(255,255,255,.1),
+    0 0 0 1px rgba(0,0,0,.18);
+  background: linear-gradient(180deg, rgba(255,255,255,.05), transparent 40%);
+}
+.zone-glow {
+  position: absolute;
+  inset: -18%;
+  background: radial-gradient(circle, rgba(241,189,69,.16), transparent 62%);
+  opacity: .7;
+  pointer-events: none;
+  animation: zonePulse 1.6s ease-in-out infinite;
+}
+.sweet-spot {
+  position: absolute;
+  inset: 38% 0;
+  background: rgba(241,189,69,.28);
+  box-shadow: 0 0 16px rgba(241,189,69,.28);
+}
+@keyframes zonePulse {
+  0%, 100% { opacity: .45; }
+  50% { opacity: .85; }
+}
 .baseball {
   position: absolute;
   z-index: 2;
@@ -549,6 +843,18 @@ blockquote { margin: 1.2rem 0; padding-left: 1rem; border-left: 3px solid var(--
   transition: top .08s linear;
 }
 .baseball.spin { animation: ballSpin .35s linear infinite; }
+.baseball.trail::before {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: -120%;
+  width: .55rem;
+  height: 180%;
+  transform: translateX(-50%);
+  background: linear-gradient(transparent, rgba(255,248,223,.55));
+  border-radius: 1rem;
+  filter: blur(1px);
+}
 .ballpark[data-mode="pitch"]:not([data-result=""]) .baseball {
   animation: deliveredBall .42s cubic-bezier(.18,.72,.35,1) both;
 }
@@ -615,129 +921,432 @@ blockquote { margin: 1.2rem 0; padding-left: 1rem; border-left: 3px solid var(--
   45% { transform: translateX(-.18rem) rotate(-5deg); }
   100% { transform: translateX(.08rem) rotate(2deg); }
 }
+/* —— Batter: faces mound (righty looks left; lefty looks right) —— */
 .batter {
-  left: calc(50% + 4.1rem);
-  bottom: 7%;
-  width: 4.2rem;
+  left: calc(50% + 3.9rem);
+  bottom: 6%;
+  width: 4.4rem;
   height: 7.6rem;
-  transform: rotate(-6deg);
-  transform-origin: bottom center;
+  transform-origin: 50% 100%;
   animation: batterIdle 1.25s ease-in-out infinite;
 }
 .batter.lefty {
-  left: calc(50% - 8.3rem);
-  transform: rotate(6deg) scaleX(-1);
+  left: calc(50% - 8.2rem);
 }
-.batter .back-arm {
-  left: 15%;
-  top: 40%;
-  transform: rotate(-64deg);
+.batter .plant-leg {
+  /* back foot away from pitcher */
+  right: 14%;
+  left: auto;
+  transform: rotate(8deg);
 }
-.batter .front-arm {
+.batter .stride-leg {
+  /* front foot toward pitcher */
+  left: 18%;
+  right: auto;
+  transform: rotate(-6deg);
+}
+.batter.lefty .plant-leg {
+  left: 14%;
+  right: auto;
+  transform: rotate(-8deg);
+}
+.batter.lefty .stride-leg {
+  right: 18%;
+  left: auto;
+  transform: rotate(6deg);
+}
+.batter .lead-arm {
+  /* front arm toward pitcher / plate */
+  left: 4%;
+  top: 44%;
+  z-index: 2;
+  transform: rotate(-42deg);
+}
+.batter .swing-arm {
+  /* rear hand near bat handle over back shoulder */
   right: 8%;
-  top: 37%;
-  transform: rotate(-102deg);
+  top: 30%;
+  width: 22%;
+  height: 40%;
+  z-index: 4;
+  transform: rotate(-108deg);
+}
+.batter.lefty .lead-arm {
+  left: auto;
+  right: 4%;
+  transform: rotate(42deg);
+}
+.batter.lefty .swing-arm {
+  left: 8%;
+  right: auto;
+  transform: rotate(108deg);
 }
 .player-bat {
   position: absolute;
-  z-index: -1;
-  width: 3.8rem;
-  height: 8.2rem;
-  right: 2.3rem;
-  top: -2.5rem;
+  z-index: 3;
+  width: 2.7rem;
+  height: 6.6rem;
+  right: -.35rem;
+  top: -2.6rem;
   object-fit: contain;
-  transform: rotate(-30deg);
-  transform-origin: 70% 85%;
+  transform: rotate(-32deg);
+  transform-origin: 50% 88%;
   filter: drop-shadow(0 2px 2px rgba(0,0,0,.4));
-  transition: transform .14s cubic-bezier(.2,.8,.25,1);
+  pointer-events: none;
+}
+.batter.lefty .player-bat {
+  right: auto;
+  left: -.35rem;
+  transform: scaleX(-1) rotate(32deg);
 }
 @keyframes batterIdle {
-  0%, 100% { translate: 0 0; }
-  50% { translate: 0 -2px; }
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-2px); }
 }
 .batter.swinging {
   animation: batterSwing .58s cubic-bezier(.2,.76,.2,1) both;
 }
+.batter.swinging .swing-arm {
+  animation: swingArm .58s cubic-bezier(.18,.78,.22,1) both;
+}
+.batter.swinging .lead-arm {
+  animation: leadArm .58s ease-out both;
+}
 .batter.swinging .player-bat {
-  transform: rotate(112deg);
+  animation: batArc .58s cubic-bezier(.18,.78,.22,1) both;
 }
-.batter.swinging .front-arm {
-  animation: batArmSwing .58s ease-out both;
-}
-.batter.swinging .back-arm {
-  animation: backArmSwing .58s ease-out both;
-}
-.batter.swinging .front-leg {
+.batter.swinging .stride-leg {
   animation: batterStep .58s ease-out both;
 }
 .batter.swinging .player-head {
   animation: batterLook .58s ease both;
 }
+.batter.lefty.swinging {
+  animation-name: batterSwingLefty;
+}
+.batter.lefty.swinging .swing-arm {
+  animation-name: swingArmLefty;
+}
+.batter.lefty.swinging .lead-arm {
+  animation-name: leadArmLefty;
+}
+.batter.lefty.swinging .player-bat {
+  animation-name: batArcLefty;
+}
+.batter.lefty.swinging .stride-leg {
+  animation-name: batterStepLefty;
+}
+.batter.lefty.swinging .player-head {
+  animation-name: batterLookLefty;
+}
 @keyframes batterSwing {
-  0% { rotate: -6deg; translate: 0 0; }
-  18% { rotate: -10deg; translate: .08rem -.04rem; }
-  48% { rotate: 7deg; translate: -.18rem -.02rem; }
-  76% { rotate: 18deg; translate: -.38rem .08rem; }
-  100% { rotate: 14deg; translate: -.3rem .1rem; }
+  0% { transform: translate(0, 0) rotate(0); }
+  18% { transform: translate(.06rem, -.04rem) rotate(-4deg); }
+  48% { transform: translate(-.28rem, -.02rem) rotate(6deg); }
+  76% { transform: translate(-.42rem, .1rem) rotate(12deg); }
+  100% { transform: translate(-.34rem, .12rem) rotate(10deg); }
 }
-@keyframes batArmSwing {
-  0%, 18% { transform: rotate(-102deg); }
-  55% { transform: rotate(18deg) translate(.25rem, -.22rem); }
-  100% { transform: rotate(47deg) translate(.42rem, -.12rem); }
+@keyframes batterSwingLefty {
+  0% { transform: translate(0, 0) rotate(0); }
+  18% { transform: translate(-.06rem, -.04rem) rotate(4deg); }
+  48% { transform: translate(.28rem, -.02rem) rotate(-6deg); }
+  76% { transform: translate(.42rem, .1rem) rotate(-12deg); }
+  100% { transform: translate(.34rem, .12rem) rotate(-10deg); }
 }
-@keyframes backArmSwing {
-  0%, 18% { transform: rotate(-64deg); }
-  55% { transform: rotate(30deg) translate(.08rem, -.25rem); }
-  100% { transform: rotate(68deg) translate(.18rem, -.28rem); }
+@keyframes swingArm {
+  0%, 14% { transform: rotate(-108deg); }
+  42% { transform: rotate(-20deg) translate(-.1rem, .1rem); }
+  100% { transform: rotate(48deg) translate(.05rem, .18rem); }
+}
+@keyframes swingArmLefty {
+  0%, 14% { transform: rotate(108deg); }
+  42% { transform: rotate(20deg) translate(.1rem, .1rem); }
+  100% { transform: rotate(-48deg) translate(-.05rem, .18rem); }
+}
+@keyframes leadArm {
+  0%, 14% { transform: rotate(-42deg); }
+  42% { transform: rotate(-6deg) translate(-.16rem, -.02rem); }
+  100% { transform: rotate(34deg) translate(-.1rem, .1rem); }
+}
+@keyframes leadArmLefty {
+  0%, 14% { transform: rotate(42deg); }
+  42% { transform: rotate(6deg) translate(.16rem, -.02rem); }
+  100% { transform: rotate(-34deg) translate(.1rem, .1rem); }
+}
+@keyframes batArc {
+  0%, 14% { transform: rotate(-32deg); }
+  42% { transform: rotate(55deg); }
+  100% { transform: rotate(128deg); }
+}
+@keyframes batArcLefty {
+  0%, 14% { transform: scaleX(-1) rotate(32deg); }
+  42% { transform: scaleX(-1) rotate(-55deg); }
+  100% { transform: scaleX(-1) rotate(-128deg); }
 }
 @keyframes batterStep {
-  0%, 18% { transform: translate(0, 0) rotate(0); }
-  48% { transform: translate(-.3rem, -.08rem) rotate(6deg); }
-  100% { transform: translate(-.48rem, .1rem) rotate(12deg); }
+  0%, 14% { transform: rotate(-6deg) translate(0, 0); }
+  48% { transform: translate(-.35rem, -.06rem) rotate(-10deg); }
+  100% { transform: translate(-.48rem, .08rem) rotate(-4deg); }
+}
+@keyframes batterStepLefty {
+  0%, 14% { transform: rotate(6deg) translate(0, 0); }
+  48% { transform: translate(.35rem, -.06rem) rotate(10deg); }
+  100% { transform: translate(.48rem, .08rem) rotate(4deg); }
 }
 @keyframes batterLook {
-  0%, 22% { transform: rotate(-3deg); }
-  52% { transform: rotate(5deg); }
-  100% { transform: rotate(11deg); }
+  0%, 18% { transform: rotate(-12deg); }
+  50% { transform: rotate(-8deg); }
+  100% { transform: rotate(-4deg); }
+}
+@keyframes batterLookLefty {
+  0%, 18% { transform: rotate(12deg); }
+  50% { transform: rotate(8deg); }
+  100% { transform: rotate(4deg); }
 }
 
+.fx-layer {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  pointer-events: none;
+  overflow: hidden;
+}
 .hit-burst {
   position: absolute;
-  z-index: 4;
   left: 50%;
   top: 58%;
   width: 1rem;
   height: 1rem;
   border-radius: 50%;
   opacity: 0;
-  pointer-events: none;
-  background: radial-gradient(circle, #fff 0 18%, rgba(241,189,69,.75) 30%, transparent 70%);
+  background: radial-gradient(circle, #fff 0 18%, rgba(241,189,69,.8) 30%, transparent 70%);
   box-shadow:
     0 0 0 0 rgba(241,189,69,.5),
     18px -10px 0 -4px #fff8df,
     -16px -8px 0 -5px #f1bd45,
-    8px 16px 0 -5px #fff;
+    8px 16px 0 -5px #fff,
+    -12px 14px 0 -6px #ffe08a;
+}
+.impact-flash {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  background: radial-gradient(circle at 50% 58%, rgba(255,248,223,.55), transparent 48%);
+}
+.impact-rays {
+  position: absolute;
+  left: 50%;
+  top: 56%;
+  width: 7rem;
+  height: 7rem;
+  margin: -3.5rem 0 0 -3.5rem;
+  opacity: 0;
+  background:
+    conic-gradient(
+      from 8deg,
+      transparent 0 12deg,
+      rgba(255,248,223,.55) 12deg 16deg,
+      transparent 16deg 40deg,
+      rgba(241,189,69,.45) 40deg 44deg,
+      transparent 44deg 68deg,
+      rgba(255,248,223,.5) 68deg 72deg,
+      transparent 72deg 96deg,
+      rgba(241,189,69,.4) 96deg 100deg,
+      transparent 100deg 124deg,
+      rgba(255,248,223,.5) 124deg 128deg,
+      transparent 128deg 152deg,
+      rgba(241,189,69,.4) 152deg 156deg,
+      transparent 156deg 360deg
+    );
+  -webkit-mask-image: radial-gradient(circle, transparent 18%, #000 32%, transparent 68%);
+  mask-image: radial-gradient(circle, transparent 18%, #000 32%, transparent 68%);
+}
+.spark-ring {
+  position: absolute;
+  left: 50%;
+  top: 56%;
+  width: 4.5rem;
+  height: 4.5rem;
+  margin: -2.25rem 0 0 -2.25rem;
+  border-radius: 50%;
+  opacity: 0;
+  border: 2px solid rgba(255, 236, 170, .0);
+  box-shadow:
+    0 -2.2rem 0 -.95rem #fff8df,
+    1.8rem -1.2rem 0 -1rem #f1bd45,
+    2.2rem .4rem 0 -1.05rem #fff,
+    1.1rem 1.9rem 0 -1rem #f6d36a,
+    -1.4rem 1.7rem 0 -1rem #fff8df,
+    -2.1rem -.2rem 0 -1.05rem #f1bd45,
+    -.9rem -1.9rem 0 -1rem #fff;
+}
+.result-callout {
+  position: absolute;
+  left: 50%;
+  top: 28%;
+  margin: 0;
+  padding: .35rem .85rem;
+  border: 2px solid rgba(255,248,223,.35);
+  border-radius: 999px;
+  color: #201609;
+  background: linear-gradient(180deg, #ffe9a0, var(--gold));
+  font-size: clamp(1rem, 5vw, 1.35rem);
+  font-weight: 1000;
+  letter-spacing: .08em;
+  white-space: nowrap;
+  opacity: 0;
+  transform: translate(-50%, 12px) scale(.86);
+  text-shadow: 0 1px 0 rgba(255,255,255,.35);
+  box-shadow: 0 8px 18px rgba(0,0,0,.28);
+}
+.fx-layer.show-hit .impact-flash,
+.fx-layer.show-hr .impact-flash {
+  animation: impactWash .42s ease-out;
+}
+.fx-layer.show-hit .impact-rays,
+.fx-layer.show-hr .impact-rays {
+  animation: rayBurst .5s ease-out;
+}
+.fx-layer.show-hr .impact-rays {
+  animation-duration: .65s;
+  filter: saturate(1.25) brightness(1.1);
+}
+.fx-layer.show-hit .spark-ring,
+.fx-layer.show-hr .spark-ring {
+  animation: sparkBurst .55s ease-out;
+}
+.fx-layer.show-hr .spark-ring {
+  animation-duration: .7s;
+  filter: saturate(1.2);
+}
+.fx-layer.show-out .impact-flash {
+  background: radial-gradient(circle at 50% 62%, rgba(140,170,190,.28), transparent 50%);
+  animation: impactWash .35s ease-out;
+}
+.fx-layer .result-callout.pop {
+  animation: calloutPop .7s cubic-bezier(.2,.8,.25,1) both;
+}
+.fx-layer.show-hr .result-callout {
+  background: linear-gradient(180deg, #fff2c4, #f0a93a);
+  border-color: rgba(255,255,255,.55);
+}
+.fx-layer.show-out .result-callout,
+.fx-layer.show-k .result-callout {
+  color: #f8f0d5;
+  background: linear-gradient(180deg, #3a4a57, #24313c);
+}
+.fx-layer.show-k .result-callout {
+  letter-spacing: .18em;
 }
 @keyframes burst {
   from { transform: translate(-50%, -50%) scale(.4); opacity: 1; }
-  to { transform: translate(-50%, -50%) scale(2.4); opacity: 0; }
+  to { transform: translate(-50%, -50%) scale(2.6); opacity: 0; }
+}
+@keyframes impactWash {
+  0% { opacity: .85; }
+  100% { opacity: 0; }
+}
+@keyframes sparkBurst {
+  0% { opacity: 1; transform: scale(.35) rotate(0); }
+  100% { opacity: 0; transform: scale(1.35) rotate(28deg); }
+}
+@keyframes rayBurst {
+  0% { opacity: .95; transform: scale(.4) rotate(-8deg); }
+  100% { opacity: 0; transform: scale(1.35) rotate(18deg); }
+}
+@keyframes calloutPop {
+  0% { opacity: 0; transform: translate(-50%, 16px) scale(.8); }
+  28% { opacity: 1; transform: translate(-50%, 0) scale(1.08); }
+  70% { opacity: 1; transform: translate(-50%, 0) scale(1); }
+  100% { opacity: 0; transform: translate(-50%, -10px) scale(.96); }
 }
 
-.bases { position: absolute; z-index: 3; right: 1rem; top: 1rem; width: 4rem; height: 4rem; transform: rotate(45deg); }
-.bases i { position: absolute; width: 1rem; height: 1rem; border: 2px solid var(--cream); background: rgba(0,0,0,.28); transition: background .2s ease; }
-.bases i.active { background: var(--gold); box-shadow: 0 0 10px rgba(241,189,69,.55); }
+.bases {
+  position: absolute;
+  z-index: 3;
+  right: 1rem;
+  top: 1rem;
+  width: 4.2rem;
+  height: 4.2rem;
+  transform: rotate(45deg);
+  filter: drop-shadow(0 4px 6px rgba(0,0,0,.28));
+}
+.bases i {
+  position: absolute;
+  width: 1rem;
+  height: 1rem;
+  border: 2px solid var(--cream);
+  background: rgba(0,0,0,.32);
+  transition: background .2s ease, box-shadow .2s ease, transform .2s ease;
+}
+.bases i.active {
+  background: var(--gold);
+  box-shadow: 0 0 12px rgba(241,189,69,.65);
+  transform: scale(1.08);
+}
 #base-second { top: 0; left: 1.5rem; }
 #base-third { top: 1.5rem; left: 0; }
 #base-first { right: 0; top: 1.5rem; }
 
-.at-bat-panel { margin-top: .75rem; padding: 1rem; border-radius: 1rem; background: rgba(0,0,0,.2); text-align: center; }
-.timing-track { position: relative; height: .8rem; margin: 1rem 0; border-radius: 1rem; background: #071711; }
-.timing-track i { position: absolute; left: 63%; width: 18%; height: 100%; background: var(--gold); opacity: .65; }
-.screen:has(.ballpark[data-mode="pitch"]) .timing-track i { background: #5aa7ff; }
-#timing-cursor { position: absolute; z-index: 1; left: 0; top: -.3rem; width: .3rem; height: 1.4rem; border-radius: 1rem; background: white; }
+.at-bat-panel {
+  margin-top: .75rem;
+  padding: 1rem;
+  border-radius: 1rem;
+  background:
+    linear-gradient(180deg, rgba(255,255,255,.05), transparent 40%),
+    rgba(0,0,0,.28);
+  border: 1px solid rgba(255,255,255,.08);
+  text-align: center;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.06);
+}
+#at-bat-status {
+  margin: 0;
+  min-height: 1.4em;
+  font-weight: 800;
+  text-shadow: 0 1px 0 rgba(0,0,0,.35);
+}
+.timing-track {
+  position: relative;
+  height: .95rem;
+  margin: 1rem 0;
+  border-radius: 1rem;
+  background:
+    linear-gradient(90deg, rgba(255,255,255,.04), transparent 30%, rgba(255,255,255,.04)),
+    #071711;
+  box-shadow: inset 0 1px 3px rgba(0,0,0,.55);
+  overflow: hidden;
+}
+.timing-track i {
+  position: absolute;
+  left: 63%;
+  width: 18%;
+  height: 100%;
+  background: linear-gradient(180deg, #ffe08a, var(--gold));
+  opacity: .8;
+  box-shadow: 0 0 12px rgba(241,189,69,.35);
+}
+.screen:has(.ballpark[data-mode="pitch"]) .timing-track i {
+  background: linear-gradient(180deg, #9ed0ff, #5aa7ff);
+  box-shadow: 0 0 12px rgba(90,167,255,.35);
+}
+#timing-cursor {
+  position: absolute;
+  z-index: 1;
+  left: 0;
+  top: -.2rem;
+  width: .28rem;
+  height: 1.35rem;
+  border-radius: 1rem;
+  background: white;
+  box-shadow: 0 0 10px rgba(255,255,255,.55);
+}
 .swing-action { width: 100%; font-size: 1.2rem; }
 .swing-action:disabled { opacity: .45; transform: none; box-shadow: none; }
-.game-log { min-height: 5rem; padding: .8rem .8rem .8rem 2rem; color: #c9d6ce; }
+.game-log {
+  min-height: 5rem;
+  padding: .8rem .8rem .8rem 2rem;
+  color: #c9d6ce;
+}
 
 .result-art {
   width: 4.8rem;
@@ -750,6 +1359,30 @@ blockquote { margin: 1.2rem 0; padding-left: 1rem; border-left: 3px solid var(--
   color: #c9d6ce;
   font-size: .9rem;
   font-weight: 700;
+}
+.result-fx {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at 20% 20%, rgba(241,189,69,.18), transparent 28%),
+    radial-gradient(circle at 80% 30%, rgba(255,255,255,.08), transparent 24%);
+  opacity: 0;
+}
+#result-screen.win .result-fx {
+  opacity: 1;
+  animation: confettiWash 1.2s ease-out both;
+  background:
+    radial-gradient(circle at 18% 18%, #f1bd45 0 4px, transparent 5px),
+    radial-gradient(circle at 72% 22%, #fff8df 0 3px, transparent 4px),
+    radial-gradient(circle at 40% 30%, #d34232 0 3px, transparent 4px),
+    radial-gradient(circle at 84% 42%, #5aa7ff 0 4px, transparent 5px),
+    radial-gradient(circle at 28% 48%, #fff 0 3px, transparent 4px),
+    radial-gradient(circle at 60% 55%, #f1bd45 0 3px, transparent 4px);
+}
+@keyframes confettiWash {
+  from { opacity: 0; transform: translateY(-8px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 dialog { max-width: 100%; width: min(calc(100% - 2rem), 30rem); border: 0; padding: 0; border-radius: 1.2rem; color: var(--ink); background: transparent; }
@@ -768,5 +1401,9 @@ dialog::backdrop { background: rgba(3,14,10,.78); backdrop-filter: blur(4px); }
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; }
-  .hero-ball, .result-art, .baseball.spin { animation: none !important; }
+  .hero-ball, .result-art, .baseball.spin, .crowd, .zone-glow, .ballpark.shake,
+  .impact-rays, .spark-ring, .hit-burst, .impact-flash { animation: none !important; }
+  .fx-layer .result-callout.pop { opacity: 1; transform: translate(-50%, 0); }
+  .fx-layer.show-hit .impact-rays,
+  .fx-layer.show-hr .impact-rays { opacity: .45; }
 }

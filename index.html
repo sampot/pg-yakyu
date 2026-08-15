@@ -98,22 +98,27 @@
         <div><span id="home-name"></span><strong id="home-score">0</strong></div>
       </div>
       <div id="ballpark" class="ballpark" data-result="">
+        <div class="stadium-sky" aria-hidden="true"></div>
+        <div class="crowd" aria-hidden="true"></div>
         <div class="lights" aria-hidden="true"></div>
+        <div class="outfield-wall" aria-hidden="true"><span>青砂盃</span></div>
         <div class="outfield-haze" aria-hidden="true"></div>
-        <div id="player-pitcher" class="pitcher cartoon-player" aria-hidden="true">
+        <div id="player-pitcher" class="pitcher cartoon-player facing-home" aria-hidden="true">
           <span class="player-shadow"></span>
-          <span class="player-leg back-leg"></span>
-          <span class="player-leg front-leg"></span>
+          <span class="player-leg plant-leg"></span>
+          <span class="player-leg stride-leg"></span>
           <span class="player-body"></span>
-          <span class="player-arm glove-arm"><i class="mini-glove"></i></span>
           <span class="player-arm throw-arm"></span>
+          <span class="player-arm glove-arm"><i class="mini-glove"></i></span>
           <span class="player-head">
             <i class="player-cap"></i>
-            <i class="player-ear"></i>
+            <i class="player-ear left-ear"></i>
+            <i class="player-ear right-ear"></i>
             <i class="player-face"><b></b></i>
           </span>
         </div>
         <div class="strike-zone" aria-label="打擊時機">
+          <span class="zone-glow"></span>
           <img id="baseball" class="baseball" src="assets/baseball-pack/ball.png" alt="" aria-hidden="true" />
           <i class="sweet-spot"></i>
         </div>
@@ -122,13 +127,13 @@
           <span class="catcher-body"></span>
           <img class="catcher-glove" src="assets/baseball-pack/glove-closed.png" alt="" />
         </div>
-        <div id="batter" class="batter cartoon-player" aria-hidden="true">
+        <div id="batter" class="batter cartoon-player facing-mound" aria-hidden="true">
           <span class="player-shadow"></span>
-          <span class="player-leg back-leg"></span>
-          <span class="player-leg front-leg"></span>
+          <span class="player-leg plant-leg"></span>
+          <span class="player-leg stride-leg"></span>
           <span class="player-body"></span>
-          <span class="player-arm bat-arm back-arm"></span>
-          <span class="player-arm bat-arm front-arm"></span>
+          <span class="player-arm lead-arm"></span>
+          <span class="player-arm swing-arm"></span>
           <span class="player-head">
             <i class="player-cap"></i>
             <i class="player-ear"></i>
@@ -136,7 +141,13 @@
           </span>
           <img class="player-bat" src="assets/baseball-pack/bat.png" alt="" />
         </div>
-        <div id="hit-burst" class="hit-burst" aria-hidden="true"></div>
+        <div id="fx-layer" class="fx-layer" aria-hidden="true">
+          <div id="hit-burst" class="hit-burst"></div>
+          <div id="impact-flash" class="impact-flash"></div>
+          <div id="impact-rays" class="impact-rays"></div>
+          <div id="spark-ring" class="spark-ring"></div>
+          <p id="result-callout" class="result-callout"></p>
+        </div>
         <div class="bases" aria-label="壘包">
           <i id="base-second" role="img" aria-label="二壘"></i>
           <i id="base-third" role="img" aria-label="三壘"></i>
@@ -152,6 +163,7 @@
     </section>
 
     <section id="result-screen" class="screen hero-card" hidden>
+      <div class="result-fx" aria-hidden="true"></div>
       <img id="result-art" class="result-art" src="assets/baseball-pack/ball.png" alt="" aria-hidden="true" />
       <p id="result-kicker" class="eyebrow"></p>
       <h2 id="result-title"></h2>

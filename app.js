@@ -241,10 +241,15 @@ function startBat() {
   pitchProgress = 0;
   pitchStartedAt = performance.now();
   ballpark.dataset.result = '';
+  ballpark.classList.remove('shake');
   batter.classList.remove('swinging');
   baseball.src = 'assets/baseball-pack/ball.png';
   baseball.classList.add('spin');
+  baseball.classList.remove('trail');
   baseball.style.top = '-1rem';
+  document.querySelector('#fx-layer').className = 'fx-layer';
+  document.querySelector('#result-callout').classList.remove('pop');
+  document.querySelector('#result-callout').textContent = '';
   const tip = taughtSwing
     ? `${career.player.name}，看準球心！`
     : '綠區正中央揮棒；也可按空白鍵。';
@@ -261,10 +266,15 @@ function startPitching() {
   pitchProgress = 0;
   pitchStartedAt = performance.now();
   ballpark.dataset.result = '';
+  ballpark.classList.remove('shake');
   batter.classList.remove('swinging');
   baseball.src = 'assets/baseball-pack/ball.png';
   baseball.classList.add('spin');
+  baseball.classList.remove('trail');
   baseball.style.top = '-1rem';
+  document.querySelector('#fx-layer').className = 'fx-layer';
+  document.querySelector('#result-callout').classList.remove('pop');
+  document.querySelector('#result-callout').textContent = '';
   const tip = taughtPitch
     ? `${career.player.name}，對準好球帶出手！`
     : '綠區出手投進好球帶；空白鍵也可投。';
@@ -285,14 +295,51 @@ function battingLabel(result) {
   }[result];
 }
 
+function calloutText(result) {
+  return {
+    strikeout: '三振！',
+    out: '出局',
+    single: '安打！',
+    double: '二壘打！',
+    triple: '三壘打！',
+    homeRun: '全壘打！',
+  }[result] ?? '出局';
+}
+
 function flashResult(result) {
   const normalized = result === 'strikeout' ? 'out' : result;
-  if (normalized === 'homeRun') ballpark.dataset.result = 'homeRun';
+  const fx = document.querySelector('#fx-layer');
+  const callout = document.querySelector('#result-callout');
+  ballpark.classList.remove('shake');
+  fx.className = 'fx-layer';
+  callout.classList.remove('pop');
+
+  if (result === 'strikeout') ballpark.dataset.result = 'strikeout';
+  else if (normalized === 'homeRun') ballpark.dataset.result = 'homeRun';
   else if (normalized === 'out') ballpark.dataset.result = 'out';
   else ballpark.dataset.result = 'hit';
-  batter.classList.add('swinging');
+
+  if (playMode === 'bat') batter.classList.add('swinging');
   baseball.classList.remove('spin');
+  baseball.classList.add('trail');
   if (normalized !== 'out') baseball.src = 'assets/baseball-pack/ball-blur.png';
+
+  const fxKind = result === 'strikeout'
+    ? 'show-k'
+    : normalized === 'homeRun'
+      ? 'show-hr'
+      : normalized === 'out'
+        ? 'show-out'
+        : 'show-hit';
+  fx.classList.add(fxKind);
+  callout.textContent = calloutText(result);
+  void callout.offsetWidth;
+  callout.classList.add('pop');
+
+  if (!reducedMotion && (normalized === 'homeRun' || normalized === 'hit' || result === 'strikeout')) {
+    void ballpark.offsetWidth;
+    ballpark.classList.add('shake');
+  }
 }
 
 function simOptions(offenseIsPlayer) {
@@ -445,6 +492,7 @@ async function finishGame() {
     : `生涯累計 ${rec.hits} 安／${rec.hr} 轟／${rec.rbi} 打點`;
   if (decidedWin) audio.win();
   else audio.lose();
+  document.querySelector('#result-screen').classList.toggle('win', decidedWin);
   showScreen('result-screen');
 }
 
