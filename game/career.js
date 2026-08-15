@@ -24,20 +24,28 @@ function buildSchedule() {
 }
 
 function emptyRecords() {
-  return { pa: 0, hits: 0, hr: 0, rbi: 0 };
+  return { pa: 0, hits: 0, hr: 0, rbi: 0, bf: 0, k: 0, er: 0 };
 }
 
 export function createCareer(input, random = Math.random) {
+  const path = input.path === 'pitcher' ? 'pitcher' : 'batter';
   const stats = initialStats(random);
-  stats.HIT = Math.min(99, stats.HIT + 5);
-  stats.POW = Math.min(99, stats.POW + 3);
+
+  if (path === 'pitcher') {
+    stats.CTL = Math.min(99, stats.CTL + 5);
+    stats.STA = Math.min(99, stats.STA + 3);
+    stats.ARM = Math.min(99, stats.ARM + 2);
+  } else {
+    stats.HIT = Math.min(99, stats.HIT + 5);
+    stats.POW = Math.min(99, stats.POW + 3);
+  }
 
   return {
     v: 1,
     player: {
       name: String(input.name || '阿勇').trim().slice(0, 8) || '阿勇',
       hand: input.hand === 'L' ? 'L' : 'R',
-      path: 'batter',
+      path,
       stats,
     },
     team: {
@@ -56,7 +64,7 @@ export function createCareer(input, random = Math.random) {
   };
 }
 
-export function completeGame(career, won, playerStats = null) {
+export function completeGame(career, won, playerStats = null, pitcherStats = null) {
   const game = career.schedule[career.index];
   if (!game || game.result !== null || career.eliminated || career.champion) return career;
 
@@ -65,12 +73,17 @@ export function completeGame(career, won, playerStats = null) {
   if (won) career.teamWins += 1;
   else career.teamLosses += 1;
 
+  if (!career.records) career.records = emptyRecords();
   if (playerStats) {
-    if (!career.records) career.records = emptyRecords();
     career.records.pa += playerStats.pa || 0;
     career.records.hits += playerStats.hits || 0;
     career.records.hr += playerStats.hr || 0;
     career.records.rbi += playerStats.rbi || 0;
+  }
+  if (pitcherStats) {
+    career.records.bf += pitcherStats.bf || 0;
+    career.records.k += pitcherStats.k || 0;
+    career.records.er += pitcherStats.er || 0;
   }
 
   if (!won && game.stage !== 'regular') career.eliminated = true;
@@ -90,7 +103,9 @@ export function growPlayer(careerOrPlayer, points) {
     career.seasonGrowth = used + remaining;
   }
 
-  const order = ['HIT', 'POW', 'SPD'];
+  const order = player.path === 'pitcher'
+    ? ['CTL', 'STA', 'ARM']
+    : ['HIT', 'POW', 'SPD'];
   let cursor = 0;
 
   while (remaining > 0 && cursor < order.length * 100) {
@@ -146,5 +161,9 @@ export function parseCareer(raw) {
   }
   if (career.seasonGrowth == null) career.seasonGrowth = 0;
   if (!career.records) career.records = emptyRecords();
+  if (career.records.bf == null) career.records.bf = 0;
+  if (career.records.k == null) career.records.k = 0;
+  if (career.records.er == null) career.records.er = 0;
+  if (career.player.path !== 'pitcher') career.player.path = 'batter';
   return career;
 }

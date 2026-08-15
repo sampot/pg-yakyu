@@ -167,7 +167,7 @@ label input:not([type="radio"]) {
 }
 label input:not([type="radio"])::placeholder { color: #7a7060; opacity: 1; }
 input[type="color"] { padding: .25rem !important; color-scheme: light; }
-fieldset { display: flex; gap: 1rem; border: 0; padding: 0; }
+fieldset { display: flex; flex-wrap: wrap; gap: .75rem 1rem; border: 0; padding: 0; }
 .choice { display: flex; align-items: center; gap: .45rem; min-height: 44px; }
 .paper-card .quiet-action { color: var(--ink); border-color: #c7bda1; }
 
@@ -226,6 +226,13 @@ blockquote { margin: 1.2rem 0; padding-left: 1rem; border-left: 3px solid var(--
 }
 .game-scoreboard div:first-child, .game-scoreboard div:last-child { display: flex; justify-content: space-between; align-items: center; gap: .4rem; }
 .game-scoreboard strong { font-size: 1.8rem; }
+#away-name { color: var(--player-team); }
+#home-name { color: var(--opponent-team); }
+#away-name, #home-name {
+  text-decoration: underline;
+  text-decoration-thickness: .22rem;
+  text-underline-offset: .28rem;
+}
 .game-scoreboard.pulse strong { animation: scorePulse .45s ease; }
 @keyframes scorePulse {
   0% { transform: scale(1); }
@@ -240,6 +247,16 @@ blockquote { margin: 1.2rem 0; padding-left: 1rem; border-left: 3px solid var(--
   font-size: .65rem;
   font-weight: 800;
   letter-spacing: .04em;
+}
+.mode-chip {
+  margin-top: .15rem;
+  color: var(--red-dark);
+  font-size: .65rem;
+  font-weight: 900;
+  letter-spacing: .08em;
+}
+.ballpark[data-mode="pitch"] .sweet-spot {
+  background: rgba(80, 170, 255, .28);
 }
 
 .ballpark {
@@ -279,8 +296,245 @@ blockquote { margin: 1.2rem 0; padding-left: 1rem; border-left: 3px solid var(--
   background: linear-gradient(180deg, transparent, rgba(8, 28, 20, .18));
   pointer-events: none;
 }
-.pitcher { position: absolute; z-index: 1; left: calc(50% - 1rem); top: 28%; width: 2rem; height: 5rem; border-radius: 1rem 1rem .3rem .3rem; background: #f4ebd0; box-shadow: 0 -1rem 0 -.35rem var(--team); }
-.pitcher span { position: absolute; top: 1.6rem; left: -.75rem; width: 3.5rem; height: .65rem; background: #f4ebd0; transform: rotate(-18deg); }
+.cartoon-player {
+  --skin: #f3b27f;
+  --skin-shadow: #d9895f;
+  --uniform: #fff9e7;
+  --outline: #17241f;
+  position: absolute;
+  z-index: 1;
+  filter: drop-shadow(0 3px 1px rgba(8, 24, 18, .28));
+}
+.ballpark[data-mode="bat"] .batter,
+.ballpark[data-mode="pitch"] .pitcher,
+.ballpark[data-mode="pitch"] .catcher {
+  --uniform-color: var(--player-team);
+}
+.ballpark[data-mode="bat"] .pitcher,
+.ballpark[data-mode="bat"] .catcher,
+.ballpark[data-mode="pitch"] .batter {
+  --uniform-color: var(--opponent-team);
+}
+.cartoon-player span,
+.cartoon-player i {
+  position: absolute;
+  display: block;
+}
+.player-shadow {
+  left: 2%;
+  bottom: -.18rem;
+  width: 96%;
+  height: .6rem;
+  border-radius: 50%;
+  background: rgba(14, 28, 22, .34);
+  transform: scaleX(1.2);
+}
+.player-body {
+  left: 23%;
+  top: 36%;
+  width: 58%;
+  height: 42%;
+  border: 2px solid var(--outline);
+  border-radius: 44% 44% 24% 24%;
+  background:
+    linear-gradient(90deg, transparent 46%, var(--uniform-color, var(--team)) 47% 54%, transparent 55%),
+    var(--uniform);
+}
+.player-body::after {
+  content: "";
+  position: absolute;
+  inset: 18% auto auto 17%;
+  width: .42rem;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: var(--uniform-color, var(--team));
+  box-shadow: 0 .66rem 0 var(--uniform-color, var(--team));
+}
+.player-head {
+  left: 21%;
+  top: 1%;
+  width: 64%;
+  height: 43%;
+  border: 2px solid var(--outline);
+  border-radius: 52% 54% 46% 48%;
+  background: var(--skin);
+  transform-origin: 50% 90%;
+}
+.player-head::after {
+  content: "";
+  position: absolute;
+  left: 16%;
+  bottom: 7%;
+  width: 22%;
+  height: 10%;
+  border-bottom: 2px solid #773e31;
+  border-radius: 50%;
+  transform: rotate(8deg);
+}
+.player-cap {
+  left: -6%;
+  top: -13%;
+  width: 110%;
+  height: 45%;
+  border: 2px solid var(--outline);
+  border-radius: 70% 70% 28% 22%;
+  background: var(--uniform-color, var(--team));
+}
+.player-cap::after {
+  content: "";
+  position: absolute;
+  right: -22%;
+  bottom: -6%;
+  width: 55%;
+  height: 28%;
+  border: 2px solid var(--outline);
+  border-radius: 50%;
+  background: var(--uniform-color, var(--team));
+  transform: rotate(5deg);
+}
+.player-face {
+  right: 16%;
+  top: 45%;
+  width: .32rem;
+  height: .42rem;
+  border-radius: 50%;
+  background: var(--outline);
+}
+.player-face::after {
+  content: "";
+  position: absolute;
+  right: -.45rem;
+  top: .05rem;
+  width: .26rem;
+  height: .38rem;
+  border-radius: 50%;
+  background: var(--outline);
+}
+.player-face b {
+  position: absolute;
+  left: .08rem;
+  top: .05rem;
+  width: .1rem;
+  height: .1rem;
+  border-radius: 50%;
+  background: white;
+}
+.player-ear {
+  left: -10%;
+  top: 49%;
+  width: 20%;
+  aspect-ratio: 1;
+  border: 2px solid var(--outline);
+  border-radius: 50%;
+  background: var(--skin-shadow);
+}
+.player-leg {
+  bottom: 0;
+  width: 24%;
+  height: 29%;
+  border: 2px solid var(--outline);
+  border-radius: 30% 30% 45% 45%;
+  background: linear-gradient(#f7f0d8 0 48%, var(--uniform-color, var(--team)) 49% 63%, #f7f0d8 64%);
+  transform-origin: 50% 8%;
+}
+.player-leg::after {
+  content: "";
+  position: absolute;
+  right: -30%;
+  bottom: -2px;
+  width: 130%;
+  height: 27%;
+  border: 2px solid var(--outline);
+  border-radius: 70% 30% 30% 45%;
+  background: #2a332f;
+}
+.back-leg { left: 25%; }
+.front-leg { right: 20%; }
+.player-arm {
+  width: 18%;
+  height: 43%;
+  border: 2px solid var(--outline);
+  border-radius: 50%;
+  background: linear-gradient(var(--uniform) 0 58%, var(--skin) 59%);
+  transform-origin: 50% 12%;
+}
+.pitcher {
+  left: calc(50% - 2rem);
+  top: 25%;
+  width: 4rem;
+  height: 7rem;
+  transform-origin: 50% 90%;
+  animation: pitcherIdle 1.8s ease-in-out infinite;
+}
+.pitcher .glove-arm {
+  left: 12%;
+  top: 40%;
+  transform: rotate(-44deg);
+}
+.pitcher .throw-arm {
+  right: 8%;
+  top: 38%;
+  transform: rotate(38deg);
+}
+.mini-glove {
+  left: -42%;
+  bottom: -12%;
+  width: 150%;
+  aspect-ratio: 1;
+  border: 2px solid var(--outline);
+  border-radius: 58% 42% 55% 45%;
+  background: #9f542f;
+}
+.ballpark[data-mode="pitch"][data-result=""] .pitcher .front-leg {
+  animation: legLift 1.25s ease-in-out infinite;
+}
+.ballpark[data-mode="bat"][data-result=""] .pitcher,
+.ballpark[data-mode="pitch"]:not([data-result=""]) .pitcher {
+  animation: pitcherThrow .72s cubic-bezier(.25,.76,.28,1) both;
+}
+.ballpark[data-mode="bat"][data-result=""] .pitcher .throw-arm,
+.ballpark[data-mode="pitch"]:not([data-result=""]) .pitcher .throw-arm {
+  animation: throwArm .72s cubic-bezier(.2,.7,.3,1) both;
+}
+.ballpark[data-mode="bat"][data-result=""] .pitcher .glove-arm,
+.ballpark[data-mode="pitch"]:not([data-result=""]) .pitcher .glove-arm {
+  animation: gloveTuck .72s ease both;
+}
+.ballpark[data-mode="bat"][data-result=""] .pitcher .player-head,
+.ballpark[data-mode="pitch"]:not([data-result=""]) .pitcher .player-head {
+  animation: headNod .72s ease both;
+}
+@keyframes pitcherIdle {
+  0%, 100% { transform: translateY(0) rotate(-1deg); }
+  50% { transform: translateY(-2px) rotate(1deg); }
+}
+@keyframes legLift {
+  0%, 100% { transform: translate(0, 0) rotate(0); }
+  42%, 68% { transform: translate(-.25rem, -.58rem) rotate(-52deg); }
+}
+@keyframes pitcherThrow {
+  0% { transform: translate(0, 0) rotate(-2deg); }
+  22% { transform: translate(-.12rem, -.1rem) rotate(-7deg); }
+  48% { transform: translate(.12rem, -.22rem) rotate(5deg); }
+  68% { transform: translate(.5rem, .06rem) rotate(13deg); }
+  100% { transform: translate(.42rem, .12rem) rotate(9deg); }
+}
+@keyframes throwArm {
+  0% { transform: rotate(38deg); }
+  26% { transform: rotate(104deg); }
+  52% { transform: rotate(-82deg); }
+  72%, 100% { transform: rotate(-198deg); }
+}
+@keyframes gloveTuck {
+  0%, 20% { transform: rotate(-44deg); }
+  55% { transform: translate(.3rem, .15rem) rotate(24deg); }
+  100% { transform: translate(.46rem, .35rem) rotate(68deg); }
+}
+@keyframes headNod {
+  0%, 22% { transform: rotate(-3deg); }
+  52% { transform: rotate(-8deg); }
+  100% { transform: rotate(6deg); }
+}
 .strike-zone { position: absolute; z-index: 2; left: calc(50% - 2.6rem); top: 47%; width: 5.2rem; height: 6.4rem; border: 2px solid rgba(255,255,255,.55); box-shadow: inset 0 0 18px rgba(255,255,255,.08); }
 .sweet-spot { position: absolute; inset: 38% 0; background: rgba(241,189,69,.2); }
 .baseball {
@@ -295,49 +549,157 @@ blockquote { margin: 1.2rem 0; padding-left: 1rem; border-left: 3px solid var(--
   transition: top .08s linear;
 }
 .baseball.spin { animation: ballSpin .35s linear infinite; }
+.ballpark[data-mode="pitch"]:not([data-result=""]) .baseball {
+  animation: deliveredBall .42s cubic-bezier(.18,.72,.35,1) both;
+}
 @keyframes ballSpin { to { transform: rotate(360deg); } }
+@keyframes deliveredBall {
+  from { top: -1rem; transform: scale(.72) rotate(0); opacity: .75; }
+  55% { opacity: 1; }
+  to { top: 105%; transform: scale(1.08) rotate(540deg); opacity: 1; }
+}
 
+.catcher {
+  left: calc(50% - 1.8rem);
+  bottom: 1%;
+  width: 3.6rem;
+  height: 4.2rem;
+  opacity: .92;
+}
+.catcher-mask {
+  left: 25%;
+  top: 0;
+  width: 50%;
+  height: 42%;
+  border: 3px solid #15211d;
+  border-radius: 45% 45% 38% 38%;
+  background:
+    repeating-linear-gradient(90deg, transparent 0 25%, #15211d 26% 32%),
+    repeating-linear-gradient(0deg, transparent 0 27%, #15211d 28% 34%),
+    var(--skin);
+}
+.catcher-body {
+  left: 14%;
+  bottom: 0;
+  width: 72%;
+  height: 64%;
+  border: 2px solid #15211d;
+  border-radius: 48% 48% 24% 24%;
+  background: linear-gradient(90deg, #213a33 0 16%, var(--uniform-color, var(--team)) 17% 83%, #213a33 84%);
+}
 .catcher-glove {
   position: absolute;
-  z-index: 1;
-  left: calc(50% - 1.7rem);
-  bottom: 4%;
-  width: 3.4rem;
-  opacity: .9;
-  filter: drop-shadow(0 3px 2px rgba(0,0,0,.45));
-  pointer-events: none;
+  z-index: 2;
+  right: -.15rem;
+  top: 40%;
+  width: 2rem;
+  filter: drop-shadow(0 2px 1px rgba(0,0,0,.4));
+  animation: gloveReady 1.2s ease-in-out infinite;
 }
-
+@keyframes gloveReady {
+  50% { transform: translateY(-3px) rotate(-5deg); }
+}
+.ballpark[data-result="out"] .catcher-glove {
+  animation: gloveCatch .38s cubic-bezier(.2,.8,.3,1) both;
+}
+.ballpark[data-result="hit"] .catcher,
+.ballpark[data-result="homeRun"] .catcher {
+  animation: catcherFlinch .42s ease-out both;
+}
+@keyframes gloveCatch {
+  0% { transform: translate(0, 0) rotate(0); }
+  55% { transform: translate(-.42rem, -.22rem) rotate(-16deg) scale(1.12); }
+  100% { transform: translate(-.25rem, -.08rem) rotate(-8deg); }
+}
+@keyframes catcherFlinch {
+  45% { transform: translateX(-.18rem) rotate(-5deg); }
+  100% { transform: translateX(.08rem) rotate(2deg); }
+}
 .batter {
-  position: absolute;
-  z-index: 1;
-  left: calc(50% + 4.8rem);
-  bottom: 12%;
-  width: 2.3rem;
-  height: 5.5rem;
-  border-radius: 1rem .8rem .4rem .4rem;
-  background: var(--cream);
-  box-shadow: 0 -1rem 0 -.35rem var(--team);
+  left: calc(50% + 4.1rem);
+  bottom: 7%;
+  width: 4.2rem;
+  height: 7.6rem;
   transform: rotate(-6deg);
   transform-origin: bottom center;
+  animation: batterIdle 1.25s ease-in-out infinite;
 }
 .batter.lefty {
-  left: calc(50% - 7.1rem);
+  left: calc(50% - 8.3rem);
   transform: rotate(6deg) scaleX(-1);
 }
-.batter img {
+.batter .back-arm {
+  left: 15%;
+  top: 40%;
+  transform: rotate(-64deg);
+}
+.batter .front-arm {
+  right: 8%;
+  top: 37%;
+  transform: rotate(-102deg);
+}
+.player-bat {
   position: absolute;
-  width: 3.5rem;
-  height: 7rem;
-  right: 1.1rem;
-  top: -2.2rem;
+  z-index: -1;
+  width: 3.8rem;
+  height: 8.2rem;
+  right: 2.3rem;
+  top: -2.5rem;
   object-fit: contain;
-  transform: rotate(-38deg);
+  transform: rotate(-30deg);
   transform-origin: 70% 85%;
   filter: drop-shadow(0 2px 2px rgba(0,0,0,.4));
-  transition: transform .12s ease-out;
+  transition: transform .14s cubic-bezier(.2,.8,.25,1);
 }
-.batter.swinging img { transform: rotate(48deg); }
+@keyframes batterIdle {
+  0%, 100% { translate: 0 0; }
+  50% { translate: 0 -2px; }
+}
+.batter.swinging {
+  animation: batterSwing .58s cubic-bezier(.2,.76,.2,1) both;
+}
+.batter.swinging .player-bat {
+  transform: rotate(112deg);
+}
+.batter.swinging .front-arm {
+  animation: batArmSwing .58s ease-out both;
+}
+.batter.swinging .back-arm {
+  animation: backArmSwing .58s ease-out both;
+}
+.batter.swinging .front-leg {
+  animation: batterStep .58s ease-out both;
+}
+.batter.swinging .player-head {
+  animation: batterLook .58s ease both;
+}
+@keyframes batterSwing {
+  0% { rotate: -6deg; translate: 0 0; }
+  18% { rotate: -10deg; translate: .08rem -.04rem; }
+  48% { rotate: 7deg; translate: -.18rem -.02rem; }
+  76% { rotate: 18deg; translate: -.38rem .08rem; }
+  100% { rotate: 14deg; translate: -.3rem .1rem; }
+}
+@keyframes batArmSwing {
+  0%, 18% { transform: rotate(-102deg); }
+  55% { transform: rotate(18deg) translate(.25rem, -.22rem); }
+  100% { transform: rotate(47deg) translate(.42rem, -.12rem); }
+}
+@keyframes backArmSwing {
+  0%, 18% { transform: rotate(-64deg); }
+  55% { transform: rotate(30deg) translate(.08rem, -.25rem); }
+  100% { transform: rotate(68deg) translate(.18rem, -.28rem); }
+}
+@keyframes batterStep {
+  0%, 18% { transform: translate(0, 0) rotate(0); }
+  48% { transform: translate(-.3rem, -.08rem) rotate(6deg); }
+  100% { transform: translate(-.48rem, .1rem) rotate(12deg); }
+}
+@keyframes batterLook {
+  0%, 22% { transform: rotate(-3deg); }
+  52% { transform: rotate(5deg); }
+  100% { transform: rotate(11deg); }
+}
 
 .hit-burst {
   position: absolute;
@@ -371,6 +733,7 @@ blockquote { margin: 1.2rem 0; padding-left: 1rem; border-left: 3px solid var(--
 .at-bat-panel { margin-top: .75rem; padding: 1rem; border-radius: 1rem; background: rgba(0,0,0,.2); text-align: center; }
 .timing-track { position: relative; height: .8rem; margin: 1rem 0; border-radius: 1rem; background: #071711; }
 .timing-track i { position: absolute; left: 63%; width: 18%; height: 100%; background: var(--gold); opacity: .65; }
+.screen:has(.ballpark[data-mode="pitch"]) .timing-track i { background: #5aa7ff; }
 #timing-cursor { position: absolute; z-index: 1; left: 0; top: -.3rem; width: .3rem; height: 1.4rem; border-radius: 1rem; background: white; }
 .swing-action { width: 100%; font-size: 1.2rem; }
 .swing-action:disabled { opacity: .45; transform: none; box-shadow: none; }

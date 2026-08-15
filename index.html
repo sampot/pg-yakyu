@@ -37,7 +37,7 @@
       <img class="hero-ball" src="assets/baseball-pack/ball.png" alt="" aria-hidden="true" />
       <p class="eyebrow">從分區預賽出發</p>
       <h2>把名字打進<br /><em>紅土全國賽</em></h2>
-      <p>關鍵打席由你揮棒，其餘局數交給隊友。十一場，拚一座青砂盃。</p>
+      <p>關鍵打席由你揮棒；選投手路線時防守半局也親自出手。其餘交給隊友。十一場，拚一座青砂盃。</p>
       <div class="stack-actions">
         <button id="continue-button" class="primary-action" type="button" hidden>繼續生涯</button>
         <button id="new-button" class="secondary-action" type="button">新開生涯</button>
@@ -54,6 +54,11 @@
           <legend>慣用手</legend>
           <label class="choice"><input type="radio" name="hand" value="R" checked /> 右打</label>
           <label class="choice"><input type="radio" name="hand" value="L" /> 左打</label>
+        </fieldset>
+        <fieldset>
+          <legend>路線</legend>
+          <label class="choice"><input type="radio" name="path" value="batter" checked /> 打者（關鍵打席揮棒）</label>
+          <label class="choice"><input type="radio" name="path" value="pitcher" /> 投手（防守投球＋打席）</label>
         </fieldset>
         <label>球衣隊色<input id="team-color" name="color" type="color" value="#b8322b" /></label>
         <button class="primary-action" type="submit">開季</button>
@@ -89,20 +94,47 @@
     <section id="game-screen" class="screen" hidden>
       <div class="game-scoreboard">
         <div><span id="away-name"></span><strong id="away-score">0</strong></div>
-        <div class="inning"><span id="inning-half">一局上</span><small><b id="outs">0</b> 出局</small><small id="venue-chip" class="venue-chip"></small></div>
+        <div class="inning"><span id="inning-half">一局上</span><small><b id="outs">0</b> 出局</small><small id="venue-chip" class="venue-chip"></small><small id="mode-chip" class="mode-chip">打擊</small></div>
         <div><span id="home-name"></span><strong id="home-score">0</strong></div>
       </div>
       <div id="ballpark" class="ballpark" data-result="">
         <div class="lights" aria-hidden="true"></div>
         <div class="outfield-haze" aria-hidden="true"></div>
-        <div class="pitcher" aria-hidden="true"><span></span></div>
+        <div id="player-pitcher" class="pitcher cartoon-player" aria-hidden="true">
+          <span class="player-shadow"></span>
+          <span class="player-leg back-leg"></span>
+          <span class="player-leg front-leg"></span>
+          <span class="player-body"></span>
+          <span class="player-arm glove-arm"><i class="mini-glove"></i></span>
+          <span class="player-arm throw-arm"></span>
+          <span class="player-head">
+            <i class="player-cap"></i>
+            <i class="player-ear"></i>
+            <i class="player-face"><b></b></i>
+          </span>
+        </div>
         <div class="strike-zone" aria-label="打擊時機">
           <img id="baseball" class="baseball" src="assets/baseball-pack/ball.png" alt="" aria-hidden="true" />
           <i class="sweet-spot"></i>
         </div>
-        <img class="catcher-glove" src="assets/baseball-pack/glove-closed.png" alt="" aria-hidden="true" />
-        <div id="batter" class="batter" aria-hidden="true">
-          <img src="assets/baseball-pack/bat.png" alt="" />
+        <div class="catcher cartoon-player" aria-hidden="true">
+          <span class="catcher-mask"></span>
+          <span class="catcher-body"></span>
+          <img class="catcher-glove" src="assets/baseball-pack/glove-closed.png" alt="" />
+        </div>
+        <div id="batter" class="batter cartoon-player" aria-hidden="true">
+          <span class="player-shadow"></span>
+          <span class="player-leg back-leg"></span>
+          <span class="player-leg front-leg"></span>
+          <span class="player-body"></span>
+          <span class="player-arm bat-arm back-arm"></span>
+          <span class="player-arm bat-arm front-arm"></span>
+          <span class="player-head">
+            <i class="player-cap"></i>
+            <i class="player-ear"></i>
+            <i class="player-face"><b></b></i>
+          </span>
+          <img class="player-bat" src="assets/baseball-pack/bat.png" alt="" />
         </div>
         <div id="hit-burst" class="hit-burst" aria-hidden="true"></div>
         <div class="bases" aria-label="壘包">
@@ -113,7 +145,7 @@
       </div>
       <div class="at-bat-panel">
         <p id="at-bat-status">投手準備中……</p>
-        <div class="timing-track"><span id="timing-cursor"></span><i></i></div>
+        <div class="timing-track" id="timing-track" aria-label="打擊時機"><span id="timing-cursor"></span><i></i></div>
         <button id="swing-button" class="swing-action" type="button">揮棒！</button>
       </div>
       <ol id="game-log" class="game-log" aria-live="polite"></ol>
@@ -145,7 +177,7 @@
     <div class="dialog-card">
       <p class="eyebrow">關於</p>
       <h2>野球生涯</h2>
-      <p>這是簡化規則的虛構青棒遊戲。校名、盃賽與人物皆為虛構；不代表任何真實學校或聯盟。九局平手最多延長兩局，再打一局定勝負；關鍵打席由你揮棒。</p>
+      <p>這是簡化規則的虛構青棒遊戲。校名、盃賽與人物皆為虛構；不代表任何真實學校或聯盟。九局平手最多延長兩局，再打一局定勝負。打者路線主打關鍵打席；投手路線防守半局親自投球，攻擊仍可揮棒。</p>
       <p>美術：looneybits「2D Baseball Pack」（CC0）。音效：Kenney Impact／Interface／Digital／Music Jingles（CC0）。其餘幾何美術為本作自製。</p>
       <button id="close-about" class="secondary-action" type="button">回球場</button>
     </div>

@@ -11,6 +11,7 @@ import { getOpponent } from './game/data/opponents.js';
 import { flavorLine } from './game/flavor.js';
 import {
   applyPlayerAtBat,
+  applyPlayerPitch,
   createMatch,
   simulateHalfInning,
   teamOffensePower,
@@ -22,6 +23,8 @@ import {
   saveCareer,
   saveSettings,
 } from './game/persist.js';
+import { judgePitch, pitchResultLabel } from './game/pitching.js';
+import { resolveTeamColors } from './game/team-colors.js';
 
 const screens = [...document.querySelectorAll('.screen')];
 const flash = document.querySelector('#flash');
@@ -32,6 +35,7 @@ const ballpark = document.querySelector('#ballpark');
 const batter = document.querySelector('#batter');
 const baseball = document.querySelector('#baseball');
 const scoreboard = document.querySelector('.game-scoreboard');
+const actionButton = document.querySelector('#swing-button');
 const audio = new YakyuAudio();
 const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
@@ -41,10 +45,16 @@ let opponent = null;
 let pitchProgress = 0;
 let pitchFrame = 0;
 let pitchStartedAt = 0;
-let canSwing = false;
+let canAct = false;
+let playMode = 'bat'; // 'bat' | 'pitch'
 let lastScore = { away: 0, home: 0 };
 let taughtSwing = false;
+let taughtPitch = false;
 let settings = { muted: false };
+
+function isPitcherPath() {
+  return career?.player?.path === 'pitcher';
+}
 
 function showScreen(id) {
   screens.forEach((screen) => {
@@ -89,15 +99,24 @@ function stageLabel(game) {
   return `分區預賽・第 ${career.index + 1} 戰`;
 }
 
-function applyTeamLook() {
-  const color = career?.team?.color || '#b8322b';
-  document.documentElement.style.setProperty('--team', color);
+function applyTeamLook(currentOpponent = null) {
+  const nextGame = career?.schedule?.[career.index];
+  const visibleOpponent = currentOpponent
+    ?? (nextGame ? getOpponent(nextGame.opponentId) : null);
+  const colors = resolveTeamColors(
+    career?.team?.color,
+    visibleOpponent?.color,
+  );
+  document.documentElement.style.setProperty('--team', colors.player);
+  document.documentElement.style.setProperty('--player-team', colors.player);
+  document.documentElement.style.setProperty('--opponent-team', colors.opponent);
   batter.classList.toggle('lefty', career?.player?.hand === 'L');
 }
 
 function renderCareer() {
   const next = career.schedule[career.index];
   const seasonDone = career.champion || career.eliminated || !next;
+  const pathTag = isPitcherPath() ? '投手' : '打者';
   document.querySelector('#career-stage').textContent = career.champion
     ? `第 ${career.season} 季・青砂盃冠軍`
     : career.eliminated
@@ -105,10 +124,14 @@ function renderCareer() {
       : `第 ${career.season} 季・${stageLabel(next)}`;
   document.querySelector('#team-heading').textContent = career.team.name;
   document.querySelector('#team-heading').style.color = career.team.color;
-  const rec = career.records || { pa: 0, hits: 0, hr: 0, rbi: 0 };
+  const rec = career.records || { pa: 0, hits: 0, hr: 0, rbi: 0, bf: 0, k: 0 };
+  const batLine = rec.pa ? `・${rec.hits}/${rec.pa}` : '';
+  const pitchLine = rec.bf ? `・${rec.k}K／${rec.bf}BF` : '';
   document.querySelector('#career-record').textContent =
-    `${career.teamWins} 勝 ${career.teamLosses} 敗・HIT ${career.player.stats.HIT}` +
-    (rec.pa ? `・生涯 ${rec.hits}/${rec.pa}` : '');
+    `${career.teamWins} 勝 ${career.teamLosses} 敗・${pathTag}` +
+    (isPitcherPath()
+      ? ` CTL ${career.player.stats.CTL}${pitchLine}`
+      : ` HIT ${career.player.stats.HIT}${batLine}`);
 
   const playButton = document.querySelector('#play-button');
   const newSeasonButton = document.querySelector('#new-season-button');
@@ -162,6 +185,7 @@ function renderGame() {
   document.querySelector('#outs').textContent = match.outs;
   document.querySelector('#venue-chip').textContent =
     venueForGame(career.schedule[career.index], career.index);
+  document.querySelector('#mode-chip').textContent = playMode === 'pitch' ? '投球' : '打擊';
   ['first', 'second', 'third'].forEach((base, index) => {
     const node = document.querySelector(`#base-${base}`);
     const on = match.bases[index];
@@ -190,14 +214,30 @@ function animatePitch(now) {
   baseball.style.top = `${pitchProgress * 105}%`;
 
   if (pitchProgress >= 1) {
-    swing('out', '目送好球，主審拉弓！', true);
+    if (playMode === 'pitch') {
+      resolvePitch('homeRun', '投丟了，被轟出場！', true);
+    } else {
+      resolveSwing('out', '目送好球，主審拉弓！', true);
+    }
     return;
   }
   pitchFrame = requestAnimationFrame(animatePitch);
 }
 
-function startPitch() {
-  canSwing = true;
+function setActionUi(mode) {
+  playMode = mode;
+  ballpark.dataset.mode = mode;
+  actionButton.textContent = mode === 'pitch' ? '投球！' : '揮棒！';
+  actionButton.disabled = false;
+  document.querySelector('#timing-track').setAttribute(
+    'aria-label',
+    mode === 'pitch' ? '投球時機' : '打擊時機',
+  );
+}
+
+function startBat() {
+  canAct = true;
+  setActionUi('bat');
   pitchProgress = 0;
   pitchStartedAt = performance.now();
   ballpark.dataset.result = '';
@@ -205,12 +245,32 @@ function startPitch() {
   baseball.src = 'assets/baseball-pack/ball.png';
   baseball.classList.add('spin');
   baseball.style.top = '-1rem';
-  document.querySelector('#swing-button').disabled = false;
   const tip = taughtSwing
     ? `${career.player.name}，看準球心！`
     : '綠區正中央揮棒；也可按空白鍵。';
   document.querySelector('#at-bat-status').textContent = tip;
   taughtSwing = true;
+  renderGame();
+  audio.pitch();
+  pitchFrame = requestAnimationFrame(animatePitch);
+}
+
+function startPitching() {
+  canAct = true;
+  setActionUi('pitch');
+  pitchProgress = 0;
+  pitchStartedAt = performance.now();
+  ballpark.dataset.result = '';
+  batter.classList.remove('swinging');
+  baseball.src = 'assets/baseball-pack/ball.png';
+  baseball.classList.add('spin');
+  baseball.style.top = '-1rem';
+  const tip = taughtPitch
+    ? `${career.player.name}，對準好球帶出手！`
+    : '綠區出手投進好球帶；空白鍵也可投。';
+  document.querySelector('#at-bat-status').textContent = tip;
+  taughtPitch = true;
+  renderGame();
   audio.pitch();
   pitchFrame = requestAnimationFrame(animatePitch);
 }
@@ -226,12 +286,13 @@ function battingLabel(result) {
 }
 
 function flashResult(result) {
-  if (result === 'homeRun') ballpark.dataset.result = 'homeRun';
-  else if (result === 'out') ballpark.dataset.result = 'out';
+  const normalized = result === 'strikeout' ? 'out' : result;
+  if (normalized === 'homeRun') ballpark.dataset.result = 'homeRun';
+  else if (normalized === 'out') ballpark.dataset.result = 'out';
   else ballpark.dataset.result = 'hit';
   batter.classList.add('swinging');
   baseball.classList.remove('spin');
-  if (result !== 'out') baseball.src = 'assets/baseball-pack/ball-blur.png';
+  if (normalized !== 'out') baseball.src = 'assets/baseball-pack/ball-blur.png';
 }
 
 function simOptions(offenseIsPlayer) {
@@ -244,11 +305,11 @@ function simOptions(offenseIsPlayer) {
   };
 }
 
-function swing(forcedResult, forcedLabel, looked = false) {
-  if (!canSwing) return;
-  canSwing = false;
+function resolveSwing(forcedResult, forcedLabel, looked = false) {
+  if (!canAct || playMode !== 'bat') return;
+  canAct = false;
   cancelAnimationFrame(pitchFrame);
-  document.querySelector('#swing-button').disabled = true;
+  actionButton.disabled = true;
 
   const result = forcedResult ?? judgeSwing(pitchProgress - 0.72, career.player.stats);
   const label = forcedLabel ?? battingLabel(result);
@@ -258,42 +319,107 @@ function swing(forcedResult, forcedLabel, looked = false) {
   if (looked) audio.swingMiss();
   else audio.hit(result);
   renderGame();
-  window.setTimeout(finishInning, reducedMotion ? 350 : 900);
+  window.setTimeout(afterBat, reducedMotion ? 350 : 900);
 }
 
-function finishInning() {
-  // Finish the remainder of the player's half, then the opponent half.
-  if (match.half === 'top') simulateHalfInning(match, Math.random, simOptions(true));
-  if (!match.finished && match.half === 'bottom') {
-    simulateHalfInning(match, Math.random, simOptions(false));
+function resolvePitch(forcedResult, forcedLabel, hung = false) {
+  if (!canAct || playMode !== 'pitch') return;
+  canAct = false;
+  cancelAnimationFrame(pitchFrame);
+  actionButton.disabled = true;
+
+  const result = forcedResult ?? judgePitch(
+    pitchProgress - 0.72,
+    career.player.stats,
+    opponent?.power ?? 50,
+  );
+  const label = forcedLabel ?? pitchResultLabel(result);
+  applyPlayerPitch(match, result, hung ? forcedLabel : undefined);
+  document.querySelector('#at-bat-status').textContent = label;
+  flashResult(result);
+  if (result === 'strikeout' || result === 'out') {
+    audio.swingMiss();
+  } else {
+    audio.hit(result === 'strikeout' ? 'out' : result);
   }
+  renderGame();
+  window.setTimeout(afterPitch, reducedMotion ? 350 : 900);
+}
+
+function afterBat() {
+  if (match.half === 'top') simulateHalfInning(match, Math.random, simOptions(true));
   renderGame();
 
   if (match.finished) {
     finishGame();
     return;
   }
+
+  if (match.half === 'bottom') {
+    if (isPitcherPath()) {
+      document.querySelector('#at-bat-status').textContent = '換防！你上場投球。';
+      window.setTimeout(startPitching, reducedMotion ? 280 : 650);
+      return;
+    }
+    simulateHalfInning(match, Math.random, simOptions(false));
+    renderGame();
+    if (match.finished) {
+      finishGame();
+      return;
+    }
+  }
+
   const tip = match.inning > 9
     ? '延長賽！一棒定江山。'
     : '隊友守住了，輪到你的打席。';
   document.querySelector('#at-bat-status').textContent = tip;
-  window.setTimeout(startPitch, reducedMotion ? 280 : 650);
+  window.setTimeout(startBat, reducedMotion ? 280 : 650);
+}
+
+function afterPitch() {
+  renderGame();
+
+  if (match.finished) {
+    finishGame();
+    return;
+  }
+
+  if (match.half === 'bottom') {
+    document.querySelector('#at-bat-status').textContent =
+      match.outs === 2 ? '兩出局，再拿一個！' : '下一位打者進場。';
+    window.setTimeout(startPitching, reducedMotion ? 280 : 550);
+    return;
+  }
+
+  const tip = match.inning > 9
+    ? '延長賽！輪到你揮棒。'
+    : '守住了，輪到你的打席。';
+  document.querySelector('#at-bat-status').textContent = tip;
+  window.setTimeout(startBat, reducedMotion ? 280 : 650);
 }
 
 async function finishGame() {
-  // Extra innings are resolved by the match state machine; do not coin-flip.
   const won = match.score.away > match.score.home;
   const tied = match.score.away === match.score.home;
   const decidedWin = tied ? false : won;
 
-  completeGame(career, decidedWin, match.playerStats);
+  completeGame(career, decidedWin, match.playerStats, match.pitcherStats);
   growPlayer(career, decidedWin ? 2 : 1);
   await persist();
 
   const stats = match.playerStats;
+  const pit = match.pitcherStats;
   const foeLine = decidedWin
     ? `「${opponent.cheer}」今天被你們蓋過了。`
     : `對手喊著「${opponent.cheer}」離開紅土。`;
+
+  const pitchSummary = isPitcherPath() && pit?.bf
+    ? `投球 ${pit.k}K／${pit.bf}BF、失 ${pit.er} 分。`
+    : '';
+  const batSummary = `本場 ${stats.hits}/${stats.pa}、${stats.hr} 轟、${stats.rbi} 打點。`;
+  const growthStat = isPitcherPath()
+    ? `控球升到 ${career.player.stats.CTL}`
+    : `打擊升到 ${career.player.stats.HIT}`;
 
   document.querySelector('#result-art').src = decidedWin
     ? 'assets/baseball-pack/ball.png'
@@ -306,14 +432,17 @@ async function finishGame() {
       : '紅土還沒冷';
   document.querySelector('#result-copy').textContent =
     `${career.team.name} ${match.score.away}：${match.score.home} ${opponent.name}。` +
-    `本場 ${stats.hits}/${stats.pa}、${stats.hr} 轟、${stats.rbi} 打點。` +
+    batSummary + pitchSummary +
     (career.champion
       ? '決賽場記住你的名字。'
       : career.eliminated
         ? '本季止步，可開新賽季再戰。'
-        : `打擊升到 ${career.player.stats.HIT}。${foeLine}`);
-  document.querySelector('#result-stats').textContent =
-    `生涯累計 ${career.records.hits} 安／${career.records.hr} 轟／${career.records.rbi} 打點`;
+        : `${growthStat}。${foeLine}`);
+
+  const rec = career.records;
+  document.querySelector('#result-stats').textContent = isPitcherPath()
+    ? `生涯 ${rec.k}K／${rec.bf}BF・失 ${rec.er}・打擊 ${rec.hits}/${rec.pa}`
+    : `生涯累計 ${rec.hits} 安／${rec.hr} 轟／${rec.rbi} 打點`;
   if (decidedWin) audio.win();
   else audio.lose();
   showScreen('result-screen');
@@ -324,13 +453,14 @@ function startGame() {
   opponent = getOpponent(game.opponentId);
   match = createMatch(opponent);
   lastScore = { away: 0, home: 0 };
-  applyTeamLook();
+  playMode = 'bat';
+  applyTeamLook(opponent);
   document.querySelector('#away-name').textContent = career.team.name;
   document.querySelector('#home-name').textContent = opponent.short;
   document.querySelector('#at-bat-status').textContent = opponent.cheer;
   renderGame();
   showScreen('game-screen');
-  window.setTimeout(startPitch, reducedMotion ? 300 : 700);
+  window.setTimeout(startBat, reducedMotion ? 300 : 700);
 }
 
 function requestNewCareer() {
@@ -343,6 +473,11 @@ async function beginNewSeason() {
   await persist();
   showFlash(`第 ${career.season} 季開打——能力微幅調整，目標仍是青砂盃。`);
   openCareer();
+}
+
+function onAction() {
+  if (playMode === 'pitch') resolvePitch();
+  else resolveSwing();
 }
 
 audio.bindMuteButton(document.querySelector('#mute-button'), {
@@ -361,9 +496,11 @@ document.querySelector('#career-form').addEventListener('submit', async (event) 
     name: data.get('playerName'),
     teamName: data.get('teamName'),
     hand: data.get('hand'),
+    path: data.get('path'),
     color: data.get('color'),
   });
   taughtSwing = false;
+  taughtPitch = false;
   await persist();
   openCareer();
 });
@@ -397,9 +534,9 @@ document.querySelector('#play-button').addEventListener('click', async () => {
   audio.ui();
   startGame();
 });
-document.querySelector('#swing-button').addEventListener('click', async () => {
+actionButton.addEventListener('click', async () => {
   await unlockAudio();
-  swing();
+  onAction();
 });
 document.querySelector('#result-button').addEventListener('click', () => {
   audio.ui();
@@ -416,6 +553,7 @@ document.querySelector('#confirm-restart').addEventListener('click', async () =>
   }
   career = null;
   taughtSwing = false;
+  taughtPitch = false;
   showScreen('create-screen');
 });
 document.querySelector('#cancel-restart').addEventListener('click', () => {
@@ -435,9 +573,9 @@ document.querySelector('#close-about').addEventListener('click', () => {
 window.addEventListener('keydown', (event) => {
   if (event.code !== 'Space' && event.code !== 'Enter') return;
   const gameVisible = !document.querySelector('#game-screen').hidden;
-  if (!gameVisible || !canSwing) return;
+  if (!gameVisible || !canAct) return;
   event.preventDefault();
-  swing();
+  onAction();
 });
 
 async function boot() {

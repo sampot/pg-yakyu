@@ -11,6 +11,7 @@ export function createMatch(opponent = null) {
     finished: false,
     log: [],
     playerStats: { pa: 0, hits: 0, hr: 0, rbi: 0 },
+    pitcherStats: { bf: 0, outs: 0, k: 0, hitsAllowed: 0, er: 0 },
   };
 }
 
@@ -111,11 +112,45 @@ export function applyPlayerAtBat(match, result, label) {
   const side = battingSide(match);
   const before = match.score[side];
   match.playerStats.pa += 1;
-  if (result !== 'out') match.playerStats.hits += 1;
+  if (result !== 'out' && result !== 'strikeout') match.playerStats.hits += 1;
   if (result === 'homeRun') match.playerStats.hr += 1;
-  applyBattingResult(match, result, label);
+  applyBattingResult(match, result === 'strikeout' ? 'out' : result, label);
   match.playerStats.rbi += Math.max(0, match.score[side] - before);
   return match;
+}
+
+export function applyPlayerPitch(match, result, label) {
+  if (!match.pitcherStats) {
+    match.pitcherStats = { bf: 0, outs: 0, k: 0, hitsAllowed: 0, er: 0 };
+  }
+  const before = match.score.home;
+  match.pitcherStats.bf += 1;
+
+  const normalized = result === 'strikeout' ? 'out' : result;
+  if (normalized === 'out') {
+    match.pitcherStats.outs += 1;
+    if (result === 'strikeout') match.pitcherStats.k += 1;
+  } else {
+    match.pitcherStats.hitsAllowed += 1;
+  }
+
+  const pitchLabels = {
+    strikeout: '三振',
+    out: '接殺出局',
+    single: '被敲一壘安打',
+    double: '被敲二壘安打',
+    triple: '被敲三壘安打',
+    homeRun: '被轟全壘打',
+  };
+  applyBattingResult(match, normalized, label || pitchLabels[result]);
+  match.pitcherStats.er += Math.max(0, match.score.home - before);
+  return match;
+}
+
+export function teamPitchPower(stats = {}) {
+  const ctl = Number(stats.CTL ?? 50);
+  const sta = Number(stats.STA ?? 50);
+  return Math.round((ctl + sta) / 2);
 }
 
 export function weightedResult(random, offensePower = 50, defensePower = 50) {
