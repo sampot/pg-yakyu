@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#173a2b" />
+  <title>野球生涯</title>
+  <link rel="stylesheet" href="styles.css" />
+  <script type="module" src="app.js"></script>
+</head>
+<body>
+  <main class="app-shell">
+    <header class="masthead">
+      <div class="brand-mark" aria-hidden="true">球</div>
+      <div>
+        <p class="eyebrow">青砂盃高校野球</p>
+        <h1>野球生涯</h1>
+      </div>
+      <button id="about-button" class="quiet-button" type="button" aria-controls="about-panel">關於</button>
+    </header>
+
+    <p id="flash" class="flash" role="status" aria-live="polite" hidden></p>
+
+    <section id="loading-screen" class="screen hero-card">
+      <p class="eyebrow">球場整備中</p>
+      <h2>正在灑紅土……</h2>
+    </section>
+
+    <section id="welcome-screen" class="screen hero-card" hidden>
+      <div class="sun-disc" aria-hidden="true"></div>
+      <p class="eyebrow">從分區預賽出發</p>
+      <h2>把名字打進<br /><em>紅土全國賽</em></h2>
+      <p>關鍵打席由你揮棒，其餘局數交給隊友。十一場，拚一座青砂盃。</p>
+      <div class="stack-actions">
+        <button id="continue-button" class="primary-action" type="button" hidden>繼續生涯</button>
+        <button id="new-button" class="secondary-action" type="button">新開生涯</button>
+      </div>
+    </section>
+
+    <section id="create-screen" class="screen paper-card" hidden>
+      <p class="eyebrow">球員登錄</p>
+      <h2>穿上你的球衣</h2>
+      <form id="career-form">
+        <label>球員暱稱<input id="player-name" name="playerName" maxlength="8" value="阿勇" required /></label>
+        <label>校隊簡稱<input id="team-name" name="teamName" maxlength="8" value="沙盒高中" required /></label>
+        <fieldset>
+          <legend>慣用手</legend>
+          <label class="choice"><input type="radio" name="hand" value="R" checked /> 右打</label>
+          <label class="choice"><input type="radio" name="hand" value="L" /> 左打</label>
+        </fieldset>
+        <label>球衣隊色<input id="team-color" name="color" type="color" value="#b8322b" /></label>
+        <button class="primary-action" type="submit">開季</button>
+        <button id="cancel-create" class="quiet-action" type="button">先回去</button>
+      </form>
+    </section>
+
+    <section id="career-screen" class="screen" hidden>
+      <article class="score-card">
+        <div>
+          <p id="career-stage" class="eyebrow"></p>
+          <h2 id="team-heading"></h2>
+          <p id="career-record"></p>
+        </div>
+        <div id="player-number" class="jersey-number">01</div>
+      </article>
+      <article class="next-game">
+        <p class="eyebrow">下一戰</p>
+        <div class="versus">
+          <div><strong id="home-team"></strong><small>你的校隊</small></div>
+          <span>VS</span>
+          <div><strong id="opponent-name"></strong><small id="opponent-region"></small></div>
+        </div>
+        <blockquote id="opponent-cheer"></blockquote>
+        <button id="play-button" class="primary-action" type="button">開打下一場</button>
+      </article>
+      <div id="schedule" class="schedule" aria-label="本季賽程"></div>
+      <button id="restart-career" class="quiet-action danger" type="button">重開生涯</button>
+    </section>
+
+    <section id="game-screen" class="screen" hidden>
+      <div class="game-scoreboard">
+        <div><span id="away-name"></span><strong id="away-score">0</strong></div>
+        <div class="inning"><span id="inning-half">一局上</span><small><b id="outs">0</b> 出局</small></div>
+        <div><span id="home-name"></span><strong id="home-score">0</strong></div>
+      </div>
+      <div class="ballpark">
+        <div class="lights" aria-hidden="true"></div>
+        <div class="pitcher" aria-hidden="true"><span></span></div>
+        <div class="strike-zone" aria-label="打擊時機">
+          <span id="baseball" class="baseball" aria-hidden="true">●</span>
+          <i class="sweet-spot"></i>
+        </div>
+        <div class="batter" aria-hidden="true"></div>
+        <div class="bases" aria-label="壘包">
+          <i id="base-second"></i><i id="base-third"></i><i id="base-first"></i>
+        </div>
+      </div>
+      <div class="at-bat-panel">
+        <p id="at-bat-status">投手準備中……</p>
+        <div class="timing-track"><span id="timing-cursor"></span><i></i></div>
+        <button id="swing-button" class="swing-action" type="button">揮棒！</button>
+      </div>
+      <ol id="game-log" class="game-log" aria-live="polite"></ol>
+    </section>
+
+    <section id="result-screen" class="screen hero-card" hidden>
+      <p id="result-kicker" class="eyebrow"></p>
+      <h2 id="result-title"></h2>
+      <p id="result-copy"></p>
+      <button id="result-button" class="primary-action" type="button">回球隊</button>
+    </section>
+  </main>
+
+  <dialog id="confirm-dialog">
+    <div class="dialog-card">
+      <p class="eyebrow">確認重開</p>
+      <h2>要放棄目前生涯嗎？</h2>
+      <p>既有賽程與能力會被新球員取代。</p>
+      <div class="dialog-actions">
+        <button id="confirm-restart" class="danger-action" type="button">放棄並重開</button>
+        <button id="cancel-restart" class="secondary-action" type="button">取消</button>
+      </div>
+    </div>
+  </dialog>
+
+  <dialog id="about-panel">
+    <div class="dialog-card">
+      <p class="eyebrow">關於</p>
+      <h2>野球生涯</h2>
+      <p>這是簡化規則的虛構青棒遊戲。校名、盃賽與人物皆為虛構；不代表任何真實學校或聯盟。</p>
+      <p>純 HTML、CSS、JavaScript 製作。幾何美術為本作自製。</p>
+      <button id="close-about" class="secondary-action" type="button">回球場</button>
+    </div>
+  </dialog>
+</body>
+</html>
