@@ -755,19 +755,23 @@ blockquote { margin: 1.2rem 0; padding-left: 1rem; border-left: 3px solid var(--
 }
 .ballpark[data-mode="bat"][data-result=""] .pitcher,
 .ballpark[data-mode="pitch"]:not([data-result=""]) .pitcher {
-  animation: pitcherThrow .72s cubic-bezier(.25,.76,.28,1) both;
+  animation: pitcherThrow .72s ease-in-out both;
 }
 .ballpark[data-mode="bat"][data-result=""] .pitcher .throw-arm,
 .ballpark[data-mode="pitch"]:not([data-result=""]) .pitcher .throw-arm {
-  animation: throwArm .72s cubic-bezier(.2,.7,.3,1) both;
+  animation: throwArm .72s ease-in-out both;
 }
 .ballpark[data-mode="bat"][data-result=""] .pitcher .glove-arm,
 .ballpark[data-mode="pitch"]:not([data-result=""]) .pitcher .glove-arm {
-  animation: gloveTuck .72s ease both;
+  animation: gloveTuck .72s ease-in-out both;
 }
 .ballpark[data-mode="bat"][data-result=""] .pitcher .player-head,
 .ballpark[data-mode="pitch"]:not([data-result=""]) .pitcher .player-head {
-  animation: headNod .72s ease both;
+  animation: headNod .72s ease-in-out both;
+}
+.ballpark[data-mode="bat"][data-result=""] .pitcher .stride-leg,
+.ballpark[data-mode="pitch"]:not([data-result=""]) .pitcher .stride-leg {
+  animation: pitcherStep .72s ease-in-out both;
 }
 @keyframes pitcherIdle {
   0%, 100% { transform: translateY(0); }
@@ -775,30 +779,47 @@ blockquote { margin: 1.2rem 0; padding-left: 1rem; border-left: 3px solid var(--
 }
 @keyframes legLift {
   0%, 100% { transform: translate(0, 0) rotate(0); }
-  42%, 68% { transform: translate(.2rem, -.55rem) rotate(48deg); }
+  15% { transform: translate(0, 0) rotate(0); }
+  35% { transform: translate(.25rem, -.65rem) rotate(55deg); }
+  60% { transform: translate(.4rem, .1rem) rotate(-10deg); }
+  85% { transform: translate(.45rem, .15rem) rotate(-5deg); }
 }
 @keyframes pitcherThrow {
   0% { transform: translate(0, 0) rotate(0); }
-  22% { transform: translate(0, -.08rem) rotate(-3deg); }
-  48% { transform: translate(0, -.2rem) rotate(2deg); }
-  68% { transform: translate(0, .1rem) rotate(4deg); }
-  100% { transform: translate(0, .14rem) rotate(2deg); }
+  15% { transform: translate(-.1rem, 0) rotate(-4deg); }
+  35% { transform: translate(0, -.2rem) rotate(2deg); }
+  60% { transform: translate(.15rem, .05rem) rotate(6deg); }
+  85% { transform: translate(.25rem, .15rem) rotate(4deg); }
+  100% { transform: translate(.2rem, .15rem) rotate(2deg); }
 }
 @keyframes throwArm {
   0% { transform: rotate(12deg); }
-  24% { transform: rotate(-56deg) translate(-.12rem, -.25rem); }
-  48% { transform: rotate(6deg) translate(.04rem, .12rem); }
-  72%, 100% { transform: rotate(98deg) translate(.18rem, .38rem); }
+  15% { transform: rotate(20deg) translate(-.05rem, .05rem); }
+  35% { transform: rotate(-60deg) translate(-.15rem, -.25rem); }
+  50% { transform: rotate(-80deg) translate(-.2rem, -.35rem); }
+  65% { transform: rotate(40deg) translate(.1rem, .15rem); }
+  85% { transform: rotate(120deg) translate(.25rem, .45rem); }
+  100% { transform: rotate(110deg) translate(.2rem, .4rem); }
 }
 @keyframes gloveTuck {
-  0%, 20% { transform: rotate(-18deg); }
-  55% { transform: translate(-.18rem, .08rem) rotate(-4deg); }
-  100% { transform: translate(-.3rem, .3rem) rotate(22deg); }
+  0%, 15% { transform: rotate(-18deg); }
+  35% { transform: translate(-.1rem, -.1rem) rotate(-30deg); }
+  60% { transform: translate(-.25rem, .15rem) rotate(10deg); }
+  100% { transform: translate(-.35rem, .35rem) rotate(25deg); }
 }
 @keyframes headNod {
-  0%, 22% { transform: rotate(0); }
-  52% { transform: rotate(-4deg); }
-  100% { transform: rotate(3deg); }
+  0%, 15% { transform: rotate(0); }
+  35% { transform: rotate(-6deg); }
+  60% { transform: rotate(2deg); }
+  100% { transform: rotate(4deg); }
+}
+@keyframes pitcherStep {
+  0% { transform: translate(0, 0) rotate(6deg); }
+  15% { transform: translate(-.05rem, -.1rem) rotate(10deg); }
+  35% { transform: translate(.2rem, -.4rem) rotate(45deg); }
+  60% { transform: translate(.4rem, .15rem) rotate(-15deg); }
+  85% { transform: translate(.5rem, .2rem) rotate(-5deg); }
+  100% { transform: translate(.45rem, .2rem) rotate(0); }
 }
 .strike-zone {
   position: absolute;
@@ -812,6 +833,9 @@ blockquote { margin: 1.2rem 0; padding-left: 1rem; border-left: 3px solid var(--
     inset 0 0 22px rgba(255,255,255,.1),
     0 0 0 1px rgba(0,0,0,.18);
   background: linear-gradient(180deg, rgba(255,255,255,.05), transparent 40%);
+}
+.ballpark[data-mode="pitch"][data-result=""] .baseball {
+  opacity: 0 !important;
 }
 .zone-glow {
   position: absolute;
@@ -1004,22 +1028,22 @@ blockquote { margin: 1.2rem 0; padding-left: 1rem; border-left: 3px solid var(--
   50% { transform: translateY(-2px); }
 }
 .batter.swinging {
-  animation: batterSwing .58s cubic-bezier(.2,.76,.2,1) both;
+  animation: batterSwing .58s ease-in-out both;
 }
 .batter.swinging .swing-arm {
-  animation: swingArm .58s cubic-bezier(.18,.78,.22,1) both;
+  animation: swingArm .58s ease-in-out both;
 }
 .batter.swinging .lead-arm {
-  animation: leadArm .58s ease-out both;
+  animation: leadArm .58s ease-in-out both;
 }
 .batter.swinging .player-bat {
-  animation: batArc .58s cubic-bezier(.18,.78,.22,1) both;
+  animation: batArc .58s ease-in-out both;
 }
 .batter.swinging .stride-leg {
-  animation: batterStep .58s ease-out both;
+  animation: batterStep .58s ease-in-out both;
 }
 .batter.swinging .player-head {
-  animation: batterLook .58s ease both;
+  animation: batterLook .58s ease-in-out both;
 }
 .batter.lefty.swinging {
   animation-name: batterSwingLefty;
@@ -1041,67 +1065,95 @@ blockquote { margin: 1.2rem 0; padding-left: 1rem; border-left: 3px solid var(--
 }
 @keyframes batterSwing {
   0% { transform: translate(0, 0) rotate(0); }
-  18% { transform: translate(.06rem, -.04rem) rotate(-4deg); }
-  48% { transform: translate(-.28rem, -.02rem) rotate(6deg); }
-  76% { transform: translate(-.42rem, .1rem) rotate(12deg); }
-  100% { transform: translate(-.34rem, .12rem) rotate(10deg); }
+  15% { transform: translate(.15rem, -.05rem) rotate(-6deg); }
+  35% { transform: translate(.2rem, -.05rem) rotate(-8deg); }
+  55% { transform: translate(-.35rem, 0) rotate(8deg); }
+  75% { transform: translate(-.45rem, .12rem) rotate(14deg); }
+  100% { transform: translate(-.38rem, .14rem) rotate(12deg); }
 }
 @keyframes batterSwingLefty {
   0% { transform: translate(0, 0) rotate(0); }
-  18% { transform: translate(-.06rem, -.04rem) rotate(4deg); }
-  48% { transform: translate(.28rem, -.02rem) rotate(-6deg); }
-  76% { transform: translate(.42rem, .1rem) rotate(-12deg); }
-  100% { transform: translate(.34rem, .12rem) rotate(-10deg); }
+  15% { transform: translate(-.15rem, -.05rem) rotate(6deg); }
+  35% { transform: translate(-.2rem, -.05rem) rotate(8deg); }
+  55% { transform: translate(.35rem, 0) rotate(-8deg); }
+  75% { transform: translate(.45rem, .12rem) rotate(-14deg); }
+  100% { transform: translate(.38rem, .14rem) rotate(-12deg); }
 }
 @keyframes swingArm {
-  0%, 14% { transform: rotate(-108deg); }
-  42% { transform: rotate(-20deg) translate(-.1rem, .1rem); }
-  100% { transform: rotate(48deg) translate(.05rem, .18rem); }
+  0% { transform: rotate(-108deg); }
+  15% { transform: rotate(-115deg) translate(.05rem, -.05rem); }
+  35% { transform: rotate(-120deg) translate(.08rem, -.08rem); }
+  55% { transform: rotate(-30deg) translate(-.15rem, .15rem); }
+  75% { transform: rotate(60deg) translate(.1rem, .25rem); }
+  100% { transform: rotate(75deg) translate(.15rem, .3rem); }
 }
 @keyframes swingArmLefty {
-  0%, 14% { transform: rotate(108deg); }
-  42% { transform: rotate(20deg) translate(.1rem, .1rem); }
-  100% { transform: rotate(-48deg) translate(-.05rem, .18rem); }
+  0% { transform: rotate(108deg); }
+  15% { transform: rotate(115deg) translate(-.05rem, -.05rem); }
+  35% { transform: rotate(120deg) translate(-.08rem, -.08rem); }
+  55% { transform: rotate(30deg) translate(.15rem, .15rem); }
+  75% { transform: rotate(-60deg) translate(-.1rem, .25rem); }
+  100% { transform: rotate(-75deg) translate(-.15rem, .3rem); }
 }
 @keyframes leadArm {
-  0%, 14% { transform: rotate(-42deg); }
-  42% { transform: rotate(-6deg) translate(-.16rem, -.02rem); }
-  100% { transform: rotate(34deg) translate(-.1rem, .1rem); }
+  0% { transform: rotate(-42deg); }
+  15% { transform: rotate(-50deg) translate(.05rem, -.05rem); }
+  35% { transform: rotate(-55deg) translate(.08rem, -.08rem); }
+  55% { transform: rotate(-10deg) translate(-.2rem, 0); }
+  75% { transform: rotate(45deg) translate(-.15rem, .15rem); }
+  100% { transform: rotate(55deg) translate(-.1rem, .2rem); }
 }
 @keyframes leadArmLefty {
-  0%, 14% { transform: rotate(42deg); }
-  42% { transform: rotate(6deg) translate(.16rem, -.02rem); }
-  100% { transform: rotate(-34deg) translate(.1rem, .1rem); }
+  0% { transform: rotate(42deg); }
+  15% { transform: rotate(50deg) translate(-.05rem, -.05rem); }
+  35% { transform: rotate(55deg) translate(-.08rem, -.08rem); }
+  55% { transform: rotate(10deg) translate(.2rem, 0); }
+  75% { transform: rotate(-45deg) translate(.15rem, .15rem); }
+  100% { transform: rotate(-55deg) translate(.1rem, .2rem); }
 }
 @keyframes batArc {
-  0%, 14% { transform: rotate(-32deg); }
-  42% { transform: rotate(55deg); }
-  100% { transform: rotate(128deg); }
+  0% { transform: rotate(-32deg); }
+  15% { transform: rotate(-45deg) translate(.05rem, -.05rem); }
+  35% { transform: rotate(-55deg) translate(.1rem, -.1rem); }
+  55% { transform: rotate(40deg); }
+  75% { transform: rotate(140deg); }
+  100% { transform: rotate(160deg); }
 }
 @keyframes batArcLefty {
-  0%, 14% { transform: scaleX(-1) rotate(32deg); }
-  42% { transform: scaleX(-1) rotate(-55deg); }
-  100% { transform: scaleX(-1) rotate(-128deg); }
+  0% { transform: scaleX(-1) rotate(32deg); }
+  15% { transform: scaleX(-1) rotate(45deg) translate(.05rem, -.05rem); }
+  35% { transform: scaleX(-1) rotate(55deg) translate(.1rem, -.1rem); }
+  55% { transform: scaleX(-1) rotate(-40deg); }
+  75% { transform: scaleX(-1) rotate(-140deg); }
+  100% { transform: scaleX(-1) rotate(-160deg); }
 }
 @keyframes batterStep {
-  0%, 14% { transform: rotate(-6deg) translate(0, 0); }
-  48% { transform: translate(-.35rem, -.06rem) rotate(-10deg); }
-  100% { transform: translate(-.48rem, .08rem) rotate(-4deg); }
+  0% { transform: rotate(-6deg) translate(0, 0); }
+  15% { transform: rotate(-2deg) translate(.1rem, -.1rem); }
+  35% { transform: rotate(0) translate(.15rem, -.15rem); }
+  55% { transform: translate(-.4rem, -.05rem) rotate(-12deg); }
+  100% { transform: translate(-.5rem, .1rem) rotate(-6deg); }
 }
 @keyframes batterStepLefty {
-  0%, 14% { transform: rotate(6deg) translate(0, 0); }
-  48% { transform: translate(.35rem, -.06rem) rotate(10deg); }
-  100% { transform: translate(.48rem, .08rem) rotate(4deg); }
+  0% { transform: rotate(6deg) translate(0, 0); }
+  15% { transform: rotate(2deg) translate(-.1rem, -.1rem); }
+  35% { transform: rotate(0) translate(-.15rem, -.15rem); }
+  55% { transform: translate(.4rem, -.05rem) rotate(12deg); }
+  100% { transform: translate(.5rem, .1rem) rotate(6deg); }
 }
 @keyframes batterLook {
-  0%, 18% { transform: rotate(-12deg); }
-  50% { transform: rotate(-8deg); }
-  100% { transform: rotate(-4deg); }
+  0% { transform: rotate(-12deg); }
+  15% { transform: rotate(-16deg); }
+  35% { transform: rotate(-18deg); }
+  55% { transform: rotate(-8deg); }
+  100% { transform: rotate(-2deg); }
 }
 @keyframes batterLookLefty {
-  0%, 18% { transform: rotate(12deg); }
-  50% { transform: rotate(8deg); }
-  100% { transform: rotate(4deg); }
+  0% { transform: rotate(12deg); }
+  15% { transform: rotate(16deg); }
+  35% { transform: rotate(18deg); }
+  55% { transform: rotate(8deg); }
+  100% { transform: rotate(2deg); }
 }
 
 .fx-layer {

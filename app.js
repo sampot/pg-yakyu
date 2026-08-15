@@ -306,7 +306,7 @@ function calloutText(result) {
   }[result] ?? '出局';
 }
 
-function flashResult(result) {
+function flashResult(result, looked = false) {
   const normalized = result === 'strikeout' ? 'out' : result;
   const fx = document.querySelector('#fx-layer');
   const callout = document.querySelector('#result-callout');
@@ -319,7 +319,8 @@ function flashResult(result) {
   else if (normalized === 'out') ballpark.dataset.result = 'out';
   else ballpark.dataset.result = 'hit';
 
-  if (playMode === 'bat') batter.classList.add('swinging');
+  if (playMode === 'bat' && !looked) batter.classList.add('swinging');
+  if (playMode === 'pitch') batter.classList.add('swinging');
   baseball.classList.remove('spin');
   baseball.classList.add('trail');
   if (normalized !== 'out') baseball.src = 'assets/baseball-pack/ball-blur.png';
@@ -362,7 +363,7 @@ function resolveSwing(forcedResult, forcedLabel, looked = false) {
   const label = forcedLabel ?? battingLabel(result);
   applyPlayerAtBat(match, result, looked ? forcedLabel : undefined);
   document.querySelector('#at-bat-status').textContent = label;
-  flashResult(looked ? 'out' : result);
+  flashResult(looked ? 'out' : result, looked);
   if (looked) audio.swingMiss();
   else audio.hit(result);
   renderGame();
@@ -383,7 +384,7 @@ function resolvePitch(forcedResult, forcedLabel, hung = false) {
   const label = forcedLabel ?? pitchResultLabel(result);
   applyPlayerPitch(match, result, hung ? forcedLabel : undefined);
   document.querySelector('#at-bat-status').textContent = label;
-  flashResult(result);
+  flashResult(result, false);
   if (result === 'strikeout' || result === 'out') {
     audio.swingMiss();
   } else {
