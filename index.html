@@ -11,12 +11,17 @@
 <body>
   <main class="app-shell">
     <header class="masthead">
-      <div class="brand-mark" aria-hidden="true">球</div>
+      <div class="brand-mark" aria-hidden="true">
+        <img src="assets/baseball-pack/ball.png" alt="" />
+      </div>
       <div>
         <p class="eyebrow">青砂盃高校野球</p>
         <h1>野球生涯</h1>
       </div>
-      <button id="about-button" class="quiet-button" type="button" aria-controls="about-panel">關於</button>
+      <div class="masthead-actions">
+        <button id="mute-button" class="quiet-button icon-button" type="button" aria-pressed="false" aria-label="關閉音效">♪</button>
+        <button id="about-button" class="quiet-button" type="button" aria-controls="about-panel">關於</button>
+      </div>
     </header>
 
     <p id="flash" class="flash" role="status" aria-live="polite" hidden></p>
@@ -28,6 +33,8 @@
 
     <section id="welcome-screen" class="screen hero-card" hidden>
       <div class="sun-disc" aria-hidden="true"></div>
+      <img class="hero-glove" src="assets/baseball-pack/glove.png" alt="" aria-hidden="true" />
+      <img class="hero-ball" src="assets/baseball-pack/ball.png" alt="" aria-hidden="true" />
       <p class="eyebrow">從分區預賽出發</p>
       <h2>把名字打進<br /><em>紅土全國賽</em></h2>
       <p>關鍵打席由你揮棒，其餘局數交給隊友。十一場，拚一座青砂盃。</p>
@@ -61,7 +68,7 @@
           <h2 id="team-heading"></h2>
           <p id="career-record"></p>
         </div>
-        <div id="player-number" class="jersey-number">01</div>
+        <img class="score-ball" src="assets/baseball-pack/ball.png" alt="" aria-hidden="true" />
       </article>
       <article class="next-game">
         <p class="eyebrow">下一戰</p>
@@ -83,14 +90,19 @@
         <div class="inning"><span id="inning-half">一局上</span><small><b id="outs">0</b> 出局</small></div>
         <div><span id="home-name"></span><strong id="home-score">0</strong></div>
       </div>
-      <div class="ballpark">
+      <div id="ballpark" class="ballpark" data-result="">
         <div class="lights" aria-hidden="true"></div>
+        <div class="outfield-haze" aria-hidden="true"></div>
         <div class="pitcher" aria-hidden="true"><span></span></div>
         <div class="strike-zone" aria-label="打擊時機">
-          <span id="baseball" class="baseball" aria-hidden="true">●</span>
+          <img id="baseball" class="baseball" src="assets/baseball-pack/ball.png" alt="" aria-hidden="true" />
           <i class="sweet-spot"></i>
         </div>
-        <div class="batter" aria-hidden="true"></div>
+        <img class="catcher-glove" src="assets/baseball-pack/glove-closed.png" alt="" aria-hidden="true" />
+        <div id="batter" class="batter" aria-hidden="true">
+          <img src="assets/baseball-pack/bat.png" alt="" />
+        </div>
+        <div id="hit-burst" class="hit-burst" aria-hidden="true"></div>
         <div class="bases" aria-label="壘包">
           <i id="base-second"></i><i id="base-third"></i><i id="base-first"></i>
         </div>
@@ -104,6 +116,7 @@
     </section>
 
     <section id="result-screen" class="screen hero-card" hidden>
+      <img id="result-art" class="result-art" src="assets/baseball-pack/ball.png" alt="" aria-hidden="true" />
       <p id="result-kicker" class="eyebrow"></p>
       <h2 id="result-title"></h2>
       <p id="result-copy"></p>
@@ -128,7 +141,7 @@
       <p class="eyebrow">關於</p>
       <h2>野球生涯</h2>
       <p>這是簡化規則的虛構青棒遊戲。校名、盃賽與人物皆為虛構；不代表任何真實學校或聯盟。</p>
-      <p>純 HTML、CSS、JavaScript 製作。幾何美術為本作自製。</p>
+      <p>美術：looneybits「2D Baseball Pack」（CC0）。音效：Kenney Impact／Interface／Digital／Music Jingles（CC0）。其餘幾何美術為本作自製。</p>
       <button id="close-about" class="secondary-action" type="button">回球場</button>
     </div>
   </dialog>

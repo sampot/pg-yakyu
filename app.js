@@ -1,3 +1,4 @@
+import { YakyuAudio } from './audio.js';
 import { judgeSwing } from './game/batting.js';
 import { completeGame, createCareer, growPlayer } from './game/career.js';
 import { getOpponent } from './game/data/opponents.js';
@@ -9,6 +10,11 @@ const flash = document.querySelector('#flash');
 const continueButton = document.querySelector('#continue-button');
 const confirmDialog = document.querySelector('#confirm-dialog');
 const aboutDialog = document.querySelector('#about-panel');
+const ballpark = document.querySelector('#ballpark');
+const batter = document.querySelector('#batter');
+const baseball = document.querySelector('#baseball');
+const scoreboard = document.querySelector('.game-scoreboard');
+const audio = new YakyuAudio();
 
 let career = null;
 let match = null;
@@ -17,6 +23,7 @@ let pitchProgress = 0;
 let pitchFrame = 0;
 let pitchStartedAt = 0;
 let canSwing = false;
+let lastScore = { away: 0, home: 0 };
 
 function showScreen(id) {
   screens.forEach((screen) => {
@@ -32,6 +39,10 @@ function showFlash(message) {
   showFlash.timer = window.setTimeout(() => {
     flash.hidden = true;
   }, 3600);
+}
+
+async function unlockAudio() {
+  await audio.unlock();
 }
 
 async function persist() {
@@ -97,6 +108,7 @@ function inningLabel() {
 }
 
 function renderGame() {
+  const scored = match.score.away !== lastScore.away || match.score.home !== lastScore.home;
   document.querySelector('#away-score').textContent = match.score.away;
   document.querySelector('#home-score').textContent = match.score.home;
   document.querySelector('#inning-half').textContent = inningLabel();
@@ -106,16 +118,22 @@ function renderGame() {
   });
   document.querySelector('#game-log').innerHTML = match.log.slice(-4).reverse()
     .map((entry) => `<li>${entry}</li>`).join('');
+  if (scored) {
+    scoreboard.classList.remove('pulse');
+    void scoreboard.offsetWidth;
+    scoreboard.classList.add('pulse');
+  }
+  lastScore = { ...match.score };
 }
 
 function animatePitch(now) {
   const duration = match.inning >= 7 ? 1180 : 1450;
   pitchProgress = Math.min(1, (now - pitchStartedAt) / duration);
   document.querySelector('#timing-cursor').style.left = `${pitchProgress * 100}%`;
-  document.querySelector('#baseball').style.top = `${pitchProgress * 105}%`;
+  baseball.style.top = `${pitchProgress * 105}%`;
 
   if (pitchProgress >= 1) {
-    swing('out', '目送好球，主審拉弓！');
+    swing('out', '目送好球，主審拉弓！', true);
     return;
   }
   pitchFrame = requestAnimationFrame(animatePitch);
@@ -125,8 +143,14 @@ function startPitch() {
   canSwing = true;
   pitchProgress = 0;
   pitchStartedAt = performance.now();
+  ballpark.dataset.result = '';
+  batter.classList.remove('swinging');
+  baseball.src = 'assets/baseball-pack/ball.png';
+  baseball.classList.add('spin');
+  baseball.style.top = '-1rem';
   document.querySelector('#swing-button').disabled = false;
   document.querySelector('#at-bat-status').textContent = `${career.player.name}，看準球心！`;
+  audio.pitch();
   pitchFrame = requestAnimationFrame(animatePitch);
 }
 
@@ -140,7 +164,16 @@ function battingLabel(result) {
   }[result];
 }
 
-function swing(forcedResult, forcedLabel) {
+function flashResult(result) {
+  if (result === 'homeRun') ballpark.dataset.result = 'homeRun';
+  else if (result === 'out') ballpark.dataset.result = 'out';
+  else ballpark.dataset.result = 'hit';
+  batter.classList.add('swinging');
+  baseball.classList.remove('spin');
+  if (result !== 'out') baseball.src = 'assets/baseball-pack/ball-blur.png';
+}
+
+function swing(forcedResult, forcedLabel, looked = false) {
   if (!canSwing) return;
   canSwing = false;
   cancelAnimationFrame(pitchFrame);
@@ -149,6 +182,9 @@ function swing(forcedResult, forcedLabel) {
   const result = forcedResult ?? judgeSwing(pitchProgress - 0.72, career.player.stats);
   applyBattingResult(match, result);
   document.querySelector('#at-bat-status').textContent = forcedLabel ?? battingLabel(result);
+  flashResult(looked ? 'out' : result);
+  if (looked) audio.swingMiss();
+  else audio.hit(result);
   renderGame();
   window.setTimeout(finishInning, 900);
 }
@@ -178,6 +214,9 @@ async function finishGame() {
   growPlayer(career.player, won ? 2 : 1);
   await persist();
 
+  document.querySelector('#result-art').src = won
+    ? 'assets/baseball-pack/ball.png'
+    : 'assets/baseball-pack/glove-closed.png';
   document.querySelector('#result-kicker').textContent = stageLabel(career.schedule[career.index - 1]);
   document.querySelector('#result-title').textContent = won ? '這場拿下！' : '紅土還沒冷';
   document.querySelector('#result-copy').textContent =
@@ -187,6 +226,8 @@ async function finishGame() {
       : career.eliminated
         ? '本季止步，但明年還有新的球季。'
         : `打擊能力提升到 ${career.player.stats.HIT}。`);
+  if (won) audio.win();
+  else audio.lose();
   showScreen('result-screen');
 }
 
@@ -194,6 +235,7 @@ function startGame() {
   const game = career.schedule[career.index];
   opponent = getOpponent(game.opponentId);
   match = createMatch(opponent);
+  lastScore = { away: 0, home: 0 };
   document.querySelector('#away-name').textContent = career.team.name;
   document.querySelector('#home-name').textContent = opponent.short;
   document.querySelector('#at-bat-status').textContent = opponent.cheer;
@@ -207,8 +249,12 @@ function requestNewCareer() {
   else showScreen('create-screen');
 }
 
+audio.bindMuteButton(document.querySelector('#mute-button'));
+
 document.querySelector('#career-form').addEventListener('submit', async (event) => {
   event.preventDefault();
+  await unlockAudio();
+  audio.ui();
   const data = new FormData(event.currentTarget);
   career = createCareer({
     name: data.get('playerName'),
@@ -220,16 +266,42 @@ document.querySelector('#career-form').addEventListener('submit', async (event) 
   openCareer();
 });
 
-continueButton.addEventListener('click', openCareer);
-document.querySelector('#new-button').addEventListener('click', requestNewCareer);
-document.querySelector('#restart-career').addEventListener('click', requestNewCareer);
-document.querySelector('#cancel-create').addEventListener('click', () => showScreen('welcome-screen'));
-document.querySelector('#play-button').addEventListener('click', startGame);
-document.querySelector('#swing-button').addEventListener('click', () => swing());
-document.querySelector('#result-button').addEventListener('click', openCareer);
+continueButton.addEventListener('click', async () => {
+  await unlockAudio();
+  audio.ui();
+  openCareer();
+});
+document.querySelector('#new-button').addEventListener('click', async () => {
+  await unlockAudio();
+  audio.ui();
+  requestNewCareer();
+});
+document.querySelector('#restart-career').addEventListener('click', async () => {
+  await unlockAudio();
+  audio.ui();
+  requestNewCareer();
+});
+document.querySelector('#cancel-create').addEventListener('click', () => {
+  audio.ui();
+  showScreen('welcome-screen');
+});
+document.querySelector('#play-button').addEventListener('click', async () => {
+  await unlockAudio();
+  audio.ui();
+  startGame();
+});
+document.querySelector('#swing-button').addEventListener('click', async () => {
+  await unlockAudio();
+  swing();
+});
+document.querySelector('#result-button').addEventListener('click', () => {
+  audio.ui();
+  openCareer();
+});
 
 document.querySelector('#confirm-restart').addEventListener('click', async () => {
   confirmDialog.close();
+  audio.ui();
   try {
     await deleteCareer();
   } catch {
@@ -238,9 +310,19 @@ document.querySelector('#confirm-restart').addEventListener('click', async () =>
   career = null;
   showScreen('create-screen');
 });
-document.querySelector('#cancel-restart').addEventListener('click', () => confirmDialog.close());
-document.querySelector('#about-button').addEventListener('click', () => aboutDialog.showModal());
-document.querySelector('#close-about').addEventListener('click', () => aboutDialog.close());
+document.querySelector('#cancel-restart').addEventListener('click', () => {
+  audio.ui();
+  confirmDialog.close();
+});
+document.querySelector('#about-button').addEventListener('click', async () => {
+  await unlockAudio();
+  audio.ui();
+  aboutDialog.showModal();
+});
+document.querySelector('#close-about').addEventListener('click', () => {
+  audio.ui();
+  aboutDialog.close();
+});
 
 async function boot() {
   try {
