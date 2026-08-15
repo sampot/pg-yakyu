@@ -1,6 +1,7 @@
 import { OPPONENTS } from './data/opponents.js';
 
 const STAT_KEYS = ['POW', 'HIT', 'SPD', 'ARM', 'CTL', 'STA'];
+const SEASON_GROWTH_CAP = 12;
 
 function initialStats(random) {
   return Object.fromEntries(
@@ -22,6 +23,10 @@ function buildSchedule() {
   return [...regular, ...playoffs];
 }
 
+function emptyRecords() {
+  return { pa: 0, hits: 0, hr: 0, rbi: 0 };
+}
+
 export function createCareer(input, random = Math.random) {
   const stats = initialStats(random);
   stats.HIT = Math.min(99, stats.HIT + 5);
@@ -40,16 +45,18 @@ export function createCareer(input, random = Math.random) {
       color: input.color || '#b8322b',
     },
     season: 1,
+    seasonGrowth: 0,
     schedule: buildSchedule(),
     index: 0,
     teamWins: 0,
     teamLosses: 0,
     eliminated: false,
     champion: false,
+    records: emptyRecords(),
   };
 }
 
-export function completeGame(career, won) {
+export function completeGame(career, won, playerStats = null) {
   const game = career.schedule[career.index];
   if (!game || game.result !== null || career.eliminated || career.champion) return career;
 
@@ -58,13 +65,31 @@ export function completeGame(career, won) {
   if (won) career.teamWins += 1;
   else career.teamLosses += 1;
 
+  if (playerStats) {
+    if (!career.records) career.records = emptyRecords();
+    career.records.pa += playerStats.pa || 0;
+    career.records.hits += playerStats.hits || 0;
+    career.records.hr += playerStats.hr || 0;
+    career.records.rbi += playerStats.rbi || 0;
+  }
+
   if (!won && game.stage !== 'regular') career.eliminated = true;
   if (won && career.index >= career.schedule.length) career.champion = true;
   return career;
 }
 
-export function growPlayer(player, points) {
+export function growPlayer(careerOrPlayer, points) {
+  const career = careerOrPlayer.player ? careerOrPlayer : null;
+  const player = career ? career.player : careerOrPlayer;
   let remaining = Math.max(0, Math.floor(points));
+
+  if (career) {
+    const used = career.seasonGrowth ?? 0;
+    const room = Math.max(0, SEASON_GROWTH_CAP - used);
+    remaining = Math.min(remaining, room);
+    career.seasonGrowth = used + remaining;
+  }
+
   const order = ['HIT', 'POW', 'SPD'];
   let cursor = 0;
 
@@ -79,6 +104,37 @@ export function growPlayer(player, points) {
   return player;
 }
 
+function decayStat(value) {
+  if (value <= 70) return value;
+  return Math.floor(70 + (value - 70) * 0.9);
+}
+
+export function startNewSeason(career) {
+  for (const key of STAT_KEYS) {
+    career.player.stats[key] = decayStat(career.player.stats[key]);
+  }
+  career.season += 1;
+  career.seasonGrowth = 0;
+  career.schedule = buildSchedule();
+  career.index = 0;
+  career.teamWins = 0;
+  career.teamLosses = 0;
+  career.eliminated = false;
+  career.champion = false;
+  return career;
+}
+
+export function venueForGame(game, index = 0) {
+  if (!game) return '球場整修中';
+  if (game.stage === 'final') return '青砂決勝場';
+  if (game.stage === 'playoff') return '巨蛋練習場';
+  if (index >= 4) {
+    const late = ['濱海球場', '山城夜賽', '鐵道主場', '鳳凰熱戰'];
+    return late[index % late.length];
+  }
+  return index % 2 === 0 ? '本校紅土' : '客場砂地';
+}
+
 export function serializeCareer(career) {
   return JSON.stringify(career);
 }
@@ -88,5 +144,7 @@ export function parseCareer(raw) {
   if (career?.v !== 1 || !career.player || !Array.isArray(career.schedule)) {
     throw new TypeError('Unsupported career save');
   }
+  if (career.seasonGrowth == null) career.seasonGrowth = 0;
+  if (!career.records) career.records = emptyRecords();
   return career;
 }

@@ -72,6 +72,7 @@
       </article>
       <article class="next-game">
         <p class="eyebrow">下一戰</p>
+        <p id="venue-label" class="venue-label"></p>
         <div class="versus">
           <div><strong id="home-team"></strong><small>你的校隊</small></div>
           <span>VS</span>
@@ -79,6 +80,7 @@
         </div>
         <blockquote id="opponent-cheer"></blockquote>
         <button id="play-button" class="primary-action" type="button">開打下一場</button>
+        <button id="new-season-button" class="secondary-action" type="button" hidden>開新賽季</button>
       </article>
       <div id="schedule" class="schedule" aria-label="本季賽程"></div>
       <button id="restart-career" class="quiet-action danger" type="button">重開生涯</button>
@@ -87,7 +89,7 @@
     <section id="game-screen" class="screen" hidden>
       <div class="game-scoreboard">
         <div><span id="away-name"></span><strong id="away-score">0</strong></div>
-        <div class="inning"><span id="inning-half">一局上</span><small><b id="outs">0</b> 出局</small></div>
+        <div class="inning"><span id="inning-half">一局上</span><small><b id="outs">0</b> 出局</small><small id="venue-chip" class="venue-chip"></small></div>
         <div><span id="home-name"></span><strong id="home-score">0</strong></div>
       </div>
       <div id="ballpark" class="ballpark" data-result="">
@@ -104,7 +106,9 @@
         </div>
         <div id="hit-burst" class="hit-burst" aria-hidden="true"></div>
         <div class="bases" aria-label="壘包">
-          <i id="base-second"></i><i id="base-third"></i><i id="base-first"></i>
+          <i id="base-second" role="img" aria-label="二壘"></i>
+          <i id="base-third" role="img" aria-label="三壘"></i>
+          <i id="base-first" role="img" aria-label="一壘"></i>
         </div>
       </div>
       <div class="at-bat-panel">
@@ -120,6 +124,7 @@
       <p id="result-kicker" class="eyebrow"></p>
       <h2 id="result-title"></h2>
       <p id="result-copy"></p>
+      <p id="result-stats" class="result-stats"></p>
       <button id="result-button" class="primary-action" type="button">回球隊</button>
     </section>
   </main>
@@ -140,7 +145,7 @@
     <div class="dialog-card">
       <p class="eyebrow">關於</p>
       <h2>野球生涯</h2>
-      <p>這是簡化規則的虛構青棒遊戲。校名、盃賽與人物皆為虛構；不代表任何真實學校或聯盟。</p>
+      <p>這是簡化規則的虛構青棒遊戲。校名、盃賽與人物皆為虛構；不代表任何真實學校或聯盟。九局平手最多延長兩局，再打一局定勝負；關鍵打席由你揮棒。</p>
       <p>美術：looneybits「2D Baseball Pack」（CC0）。音效：Kenney Impact／Interface／Digital／Music Jingles（CC0）。其餘幾何美術為本作自製。</p>
       <button id="close-about" class="secondary-action" type="button">回球場</button>
     </div>

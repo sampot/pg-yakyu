@@ -61,12 +61,13 @@ export class YakyuAudio {
     }
   }
 
-  bindMuteButton(button) {
+  bindMuteButton(button, { onChange } = {}) {
     this.mutedButton = button;
     button.addEventListener('click', async () => {
       await this.unlock();
       this.setEnabled(!this.enabled);
       this.play('click');
+      if (onChange) await onChange(this.enabled);
     });
     this.setEnabled(this.enabled);
   }

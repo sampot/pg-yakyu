@@ -10,7 +10,14 @@ export function createMatch(opponent = null) {
     score: { away: 0, home: 0 },
     finished: false,
     log: [],
+    playerStats: { pa: 0, hits: 0, hr: 0, rbi: 0 },
   };
+}
+
+export function teamOffensePower(stats = {}) {
+  const hit = Number(stats.HIT ?? 50);
+  const pow = Number(stats.POW ?? 50);
+  return Math.round((hit + pow) / 2);
 }
 
 function battingSide(match) {
@@ -31,18 +38,25 @@ function endHalfInning(match) {
   }
 
   if (match.inning >= 9) {
-    match.finished = true;
-    return;
+    if (match.score.away !== match.score.home) {
+      match.finished = true;
+      return;
+    }
+    // Tied: extras through 11, then one sudden-death inning (12).
+    if (match.inning >= 12) {
+      match.finished = true;
+      return;
+    }
   }
 
   match.inning += 1;
   match.half = 'top';
 }
 
-export function recordOut(match) {
+export function recordOut(match, label = '出局') {
   if (match.finished) return match;
   match.outs += 1;
-  match.log.push('出局');
+  match.log.push(label);
   if (match.outs >= 3) endHalfInning(match);
   return match;
 }
@@ -66,10 +80,17 @@ function advanceRunners(match, bases) {
   return runs;
 }
 
-export function applyBattingResult(match, result) {
+const RESULT_LABELS = {
+  single: '一壘安打',
+  double: '二壘安打',
+  triple: '三壘安打',
+  homeRun: '全壘打',
+};
+
+export function applyBattingResult(match, result, label) {
   if (match.finished) return match;
 
-  if (result === 'out') return recordOut(match);
+  if (result === 'out') return recordOut(match, label || '出局');
 
   const basesByResult = {
     single: 1,
@@ -81,28 +102,51 @@ export function applyBattingResult(match, result) {
   if (!bases) throw new TypeError(`Unknown batting result: ${result}`);
 
   const runs = advanceRunners(match, bases);
-  const labels = {
-    single: '一壘安打',
-    double: '二壘安打',
-    triple: '三壘安打',
-    homeRun: '全壘打',
-  };
-  match.log.push(`${labels[result]}${runs ? `，${runs} 分` : ''}`);
+  const baseLabel = label || RESULT_LABELS[result];
+  match.log.push(`${baseLabel}${runs ? `，${runs} 分` : ''}`);
   return match;
 }
 
-function randomResult(random) {
+export function applyPlayerAtBat(match, result, label) {
+  const side = battingSide(match);
+  const before = match.score[side];
+  match.playerStats.pa += 1;
+  if (result !== 'out') match.playerStats.hits += 1;
+  if (result === 'homeRun') match.playerStats.hr += 1;
+  applyBattingResult(match, result, label);
+  match.playerStats.rbi += Math.max(0, match.score[side] - before);
+  return match;
+}
+
+export function weightedResult(random, offensePower = 50, defensePower = 50) {
+  const diff = Math.max(-0.35, Math.min(0.35, (offensePower - defensePower) / 100));
+  const homeRun = 0.035 + diff * 0.05;
+  const double = 0.09 + diff * 0.06;
+  const triple = 0.11 + diff * 0.02;
+  const single = 0.3 + diff * 0.1;
   const roll = random();
-  if (roll < 0.04) return 'homeRun';
-  if (roll < 0.1) return 'double';
-  if (roll < 0.28) return 'single';
+  if (roll < homeRun) return 'homeRun';
+  if (roll < double) return 'double';
+  if (roll < triple) return 'triple';
+  if (roll < single) return 'single';
   return 'out';
 }
 
-export function simulateHalfInning(match, random = Math.random) {
+function randomResult(random) {
+  return weightedResult(random, 50, 50);
+}
+
+export function simulateHalfInning(
+  match,
+  random = Math.random,
+  options = {},
+) {
   const targetHalf = match.half;
   const targetInning = match.inning;
   let plateAppearances = 0;
+  const offensePower = options.offensePower ?? 50;
+  const defensePower = options.defensePower ?? 50;
+  const flavor = options.flavor;
 
   while (
     !match.finished &&
@@ -110,9 +154,13 @@ export function simulateHalfInning(match, random = Math.random) {
     match.inning === targetInning &&
     plateAppearances < 20
   ) {
-    applyBattingResult(match, randomResult(random));
+    const result = weightedResult(random, offensePower, defensePower);
+    const label = flavor ? flavor(result, random) : undefined;
+    applyBattingResult(match, result, label);
     plateAppearances += 1;
   }
 
   return match;
 }
+
+export { randomResult };

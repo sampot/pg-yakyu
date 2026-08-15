@@ -1,9 +1,27 @@
 import { YakyuAudio } from './audio.js';
 import { judgeSwing } from './game/batting.js';
-import { completeGame, createCareer, growPlayer } from './game/career.js';
+import {
+  completeGame,
+  createCareer,
+  growPlayer,
+  startNewSeason,
+  venueForGame,
+} from './game/career.js';
 import { getOpponent } from './game/data/opponents.js';
-import { applyBattingResult, createMatch, simulateHalfInning } from './game/match.js';
-import { deleteCareer, loadCareer, saveCareer } from './game/persist.js';
+import { flavorLine } from './game/flavor.js';
+import {
+  applyPlayerAtBat,
+  createMatch,
+  simulateHalfInning,
+  teamOffensePower,
+} from './game/match.js';
+import {
+  deleteCareer,
+  loadCareer,
+  loadSettings,
+  saveCareer,
+  saveSettings,
+} from './game/persist.js';
 
 const screens = [...document.querySelectorAll('.screen')];
 const flash = document.querySelector('#flash');
@@ -15,6 +33,7 @@ const batter = document.querySelector('#batter');
 const baseball = document.querySelector('#baseball');
 const scoreboard = document.querySelector('.game-scoreboard');
 const audio = new YakyuAudio();
+const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 let career = null;
 let match = null;
@@ -24,12 +43,14 @@ let pitchFrame = 0;
 let pitchStartedAt = 0;
 let canSwing = false;
 let lastScore = { away: 0, home: 0 };
+let taughtSwing = false;
+let settings = { muted: false };
 
 function showScreen(id) {
   screens.forEach((screen) => {
     screen.hidden = screen.id !== id;
   });
-  window.scrollTo({ top: 0, behavior: 'smooth' });
+  window.scrollTo({ top: 0, behavior: reducedMotion ? 'auto' : 'smooth' });
 }
 
 function showFlash(message) {
@@ -53,6 +74,14 @@ async function persist() {
   }
 }
 
+async function persistSettings() {
+  try {
+    await saveSettings(settings);
+  } catch {
+    // Settings are best-effort; gameplay continues.
+  }
+}
+
 function stageLabel(game) {
   if (!game) return '球季完成';
   if (game.stage === 'final') return '紅土全國賽・決賽';
@@ -60,33 +89,48 @@ function stageLabel(game) {
   return `分區預賽・第 ${career.index + 1} 戰`;
 }
 
+function applyTeamLook() {
+  const color = career?.team?.color || '#b8322b';
+  document.documentElement.style.setProperty('--team', color);
+  batter.classList.toggle('lefty', career?.player?.hand === 'L');
+}
+
 function renderCareer() {
   const next = career.schedule[career.index];
+  const seasonDone = career.champion || career.eliminated || !next;
   document.querySelector('#career-stage').textContent = career.champion
-    ? '青砂盃冠軍'
+    ? `第 ${career.season} 季・青砂盃冠軍`
     : career.eliminated
-      ? '本季止步'
-      : stageLabel(next);
+      ? `第 ${career.season} 季・本季止步`
+      : `第 ${career.season} 季・${stageLabel(next)}`;
   document.querySelector('#team-heading').textContent = career.team.name;
   document.querySelector('#team-heading').style.color = career.team.color;
+  const rec = career.records || { pa: 0, hits: 0, hr: 0, rbi: 0 };
   document.querySelector('#career-record').textContent =
-    `${career.teamWins} 勝 ${career.teamLosses} 敗・${career.player.name} ${career.player.stats.HIT} 打擊`;
+    `${career.teamWins} 勝 ${career.teamLosses} 敗・HIT ${career.player.stats.HIT}` +
+    (rec.pa ? `・生涯 ${rec.hits}/${rec.pa}` : '');
 
   const playButton = document.querySelector('#play-button');
-  if (!next) {
+  const newSeasonButton = document.querySelector('#new-season-button');
+  newSeasonButton.hidden = !seasonDone;
+
+  if (!next || career.eliminated) {
     document.querySelector('#opponent-name').textContent = career.champion ? '青砂盃到手！' : '球季結束';
-    document.querySelector('#opponent-region').textContent = '';
+    document.querySelector('#opponent-region').textContent = seasonDone ? '可開新賽季' : '';
     document.querySelector('#opponent-cheer').textContent = career.champion
       ? '你的名字，已經留在這片紅土。'
       : '整理球具，明年再來。';
+    document.querySelector('#venue-label').textContent = '';
     playButton.hidden = true;
   } else {
     const nextOpponent = getOpponent(next.opponentId);
     document.querySelector('#home-team').textContent = career.team.name;
     document.querySelector('#opponent-name').textContent = nextOpponent.name;
-    document.querySelector('#opponent-region').textContent = `${nextOpponent.region}區・戰力 ${nextOpponent.power}`;
+    document.querySelector('#opponent-region').textContent =
+      `${nextOpponent.region}區・戰力 ${nextOpponent.power}`;
     document.querySelector('#opponent-cheer').textContent = `「${nextOpponent.cheer}」`;
-    playButton.hidden = career.eliminated;
+    document.querySelector('#venue-label').textContent = venueForGame(next, career.index);
+    playButton.hidden = false;
     playButton.textContent = next.stage === 'final' ? '踏進決賽紅土' : '開打下一場';
   }
 
@@ -98,13 +142,16 @@ function renderCareer() {
 }
 
 function openCareer() {
+  applyTeamLook();
   renderCareer();
   showScreen('career-screen');
 }
 
 function inningLabel() {
-  const numerals = ['零', '一', '二', '三', '四', '五', '六', '七', '八', '九'];
-  return `${numerals[match.inning] ?? match.inning}局${match.half === 'top' ? '上' : '下'}`;
+  const numerals = ['零', '一', '二', '三', '四', '五', '六', '七', '八', '九', '十', '十一', '十二'];
+  const name = numerals[match.inning] ?? String(match.inning);
+  const extra = match.inning > 9 ? '延長' : '';
+  return `${extra}${name}局${match.half === 'top' ? '上' : '下'}`;
 }
 
 function renderGame() {
@@ -113,8 +160,13 @@ function renderGame() {
   document.querySelector('#home-score').textContent = match.score.home;
   document.querySelector('#inning-half').textContent = inningLabel();
   document.querySelector('#outs').textContent = match.outs;
+  document.querySelector('#venue-chip').textContent =
+    venueForGame(career.schedule[career.index], career.index);
   ['first', 'second', 'third'].forEach((base, index) => {
-    document.querySelector(`#base-${base}`).classList.toggle('active', match.bases[index]);
+    const node = document.querySelector(`#base-${base}`);
+    const on = match.bases[index];
+    node.classList.toggle('active', on);
+    node.setAttribute('aria-label', `${['一', '二', '三'][index]}壘${on ? '有人' : '空'}`);
   });
   document.querySelector('#game-log').innerHTML = match.log.slice(-4).reverse()
     .map((entry) => `<li>${entry}</li>`).join('');
@@ -126,8 +178,13 @@ function renderGame() {
   lastScore = { ...match.score };
 }
 
+function pitchDuration() {
+  if (reducedMotion) return 700;
+  return match.inning >= 7 ? 1180 : 1450;
+}
+
 function animatePitch(now) {
-  const duration = match.inning >= 7 ? 1180 : 1450;
+  const duration = pitchDuration();
   pitchProgress = Math.min(1, (now - pitchStartedAt) / duration);
   document.querySelector('#timing-cursor').style.left = `${pitchProgress * 100}%`;
   baseball.style.top = `${pitchProgress * 105}%`;
@@ -149,7 +206,11 @@ function startPitch() {
   baseball.classList.add('spin');
   baseball.style.top = '-1rem';
   document.querySelector('#swing-button').disabled = false;
-  document.querySelector('#at-bat-status').textContent = `${career.player.name}，看準球心！`;
+  const tip = taughtSwing
+    ? `${career.player.name}，看準球心！`
+    : '綠區正中央揮棒；也可按空白鍵。';
+  document.querySelector('#at-bat-status').textContent = tip;
+  taughtSwing = true;
   audio.pitch();
   pitchFrame = requestAnimationFrame(animatePitch);
 }
@@ -173,6 +234,16 @@ function flashResult(result) {
   if (result !== 'out') baseball.src = 'assets/baseball-pack/ball-blur.png';
 }
 
+function simOptions(offenseIsPlayer) {
+  const playerPower = teamOffensePower(career.player.stats);
+  const foePower = opponent?.power ?? 50;
+  return {
+    offensePower: offenseIsPlayer ? playerPower : foePower,
+    defensePower: offenseIsPlayer ? foePower : playerPower,
+    flavor: flavorLine,
+  };
+}
+
 function swing(forcedResult, forcedLabel, looked = false) {
   if (!canSwing) return;
   canSwing = false;
@@ -180,53 +251,70 @@ function swing(forcedResult, forcedLabel, looked = false) {
   document.querySelector('#swing-button').disabled = true;
 
   const result = forcedResult ?? judgeSwing(pitchProgress - 0.72, career.player.stats);
-  applyBattingResult(match, result);
-  document.querySelector('#at-bat-status').textContent = forcedLabel ?? battingLabel(result);
+  const label = forcedLabel ?? battingLabel(result);
+  applyPlayerAtBat(match, result, looked ? forcedLabel : undefined);
+  document.querySelector('#at-bat-status').textContent = label;
   flashResult(looked ? 'out' : result);
   if (looked) audio.swingMiss();
   else audio.hit(result);
   renderGame();
-  window.setTimeout(finishInning, 900);
+  window.setTimeout(finishInning, reducedMotion ? 350 : 900);
 }
 
 function finishInning() {
-  if (match.half === 'top') simulateHalfInning(match);
-  if (!match.finished && match.half === 'bottom') simulateHalfInning(match);
+  // Finish the remainder of the player's half, then the opponent half.
+  if (match.half === 'top') simulateHalfInning(match, Math.random, simOptions(true));
+  if (!match.finished && match.half === 'bottom') {
+    simulateHalfInning(match, Math.random, simOptions(false));
+  }
   renderGame();
 
   if (match.finished) {
     finishGame();
     return;
   }
-  document.querySelector('#at-bat-status').textContent = '隊友守住了，輪到你的打席。';
-  window.setTimeout(startPitch, 650);
+  const tip = match.inning > 9
+    ? '延長賽！一棒定江山。'
+    : '隊友守住了，輪到你的打席。';
+  document.querySelector('#at-bat-status').textContent = tip;
+  window.setTimeout(startPitch, reducedMotion ? 280 : 650);
 }
 
 async function finishGame() {
-  if (match.score.away === match.score.home) {
-    const clutch = career.player.stats.HIT / 100;
-    match.score[Math.random() < clutch ? 'away' : 'home'] += 1;
-    match.log.push('延長決勝，一分定江山');
-  }
-
+  // Extra innings are resolved by the match state machine; do not coin-flip.
   const won = match.score.away > match.score.home;
-  completeGame(career, won);
-  growPlayer(career.player, won ? 2 : 1);
+  const tied = match.score.away === match.score.home;
+  const decidedWin = tied ? false : won;
+
+  completeGame(career, decidedWin, match.playerStats);
+  growPlayer(career, decidedWin ? 2 : 1);
   await persist();
 
-  document.querySelector('#result-art').src = won
+  const stats = match.playerStats;
+  const foeLine = decidedWin
+    ? `「${opponent.cheer}」今天被你們蓋過了。`
+    : `對手喊著「${opponent.cheer}」離開紅土。`;
+
+  document.querySelector('#result-art').src = decidedWin
     ? 'assets/baseball-pack/ball.png'
     : 'assets/baseball-pack/glove-closed.png';
   document.querySelector('#result-kicker').textContent = stageLabel(career.schedule[career.index - 1]);
-  document.querySelector('#result-title').textContent = won ? '這場拿下！' : '紅土還沒冷';
+  document.querySelector('#result-title').textContent = decidedWin
+    ? (career.champion ? '青砂盃到手！' : '這場拿下！')
+    : tied
+      ? '延長仍平，吞下敗仗'
+      : '紅土還沒冷';
   document.querySelector('#result-copy').textContent =
     `${career.team.name} ${match.score.away}：${match.score.home} ${opponent.name}。` +
+    `本場 ${stats.hits}/${stats.pa}、${stats.hr} 轟、${stats.rbi} 打點。` +
     (career.champion
-      ? '青砂盃到手，你的名字留在決賽場。'
+      ? '決賽場記住你的名字。'
       : career.eliminated
-        ? '本季止步，但明年還有新的球季。'
-        : `打擊能力提升到 ${career.player.stats.HIT}。`);
-  if (won) audio.win();
+        ? '本季止步，可開新賽季再戰。'
+        : `打擊升到 ${career.player.stats.HIT}。${foeLine}`);
+  document.querySelector('#result-stats').textContent =
+    `生涯累計 ${career.records.hits} 安／${career.records.hr} 轟／${career.records.rbi} 打點`;
+  if (decidedWin) audio.win();
   else audio.lose();
   showScreen('result-screen');
 }
@@ -236,12 +324,13 @@ function startGame() {
   opponent = getOpponent(game.opponentId);
   match = createMatch(opponent);
   lastScore = { away: 0, home: 0 };
+  applyTeamLook();
   document.querySelector('#away-name').textContent = career.team.name;
   document.querySelector('#home-name').textContent = opponent.short;
   document.querySelector('#at-bat-status').textContent = opponent.cheer;
   renderGame();
   showScreen('game-screen');
-  window.setTimeout(startPitch, 700);
+  window.setTimeout(startPitch, reducedMotion ? 300 : 700);
 }
 
 function requestNewCareer() {
@@ -249,7 +338,19 @@ function requestNewCareer() {
   else showScreen('create-screen');
 }
 
-audio.bindMuteButton(document.querySelector('#mute-button'));
+async function beginNewSeason() {
+  startNewSeason(career);
+  await persist();
+  showFlash(`第 ${career.season} 季開打——能力微幅調整，目標仍是青砂盃。`);
+  openCareer();
+}
+
+audio.bindMuteButton(document.querySelector('#mute-button'), {
+  onChange: async (enabled) => {
+    settings.muted = !enabled;
+    await persistSettings();
+  },
+});
 
 document.querySelector('#career-form').addEventListener('submit', async (event) => {
   event.preventDefault();
@@ -262,6 +363,7 @@ document.querySelector('#career-form').addEventListener('submit', async (event) 
     hand: data.get('hand'),
     color: data.get('color'),
   });
+  taughtSwing = false;
   await persist();
   openCareer();
 });
@@ -280,6 +382,11 @@ document.querySelector('#restart-career').addEventListener('click', async () => 
   await unlockAudio();
   audio.ui();
   requestNewCareer();
+});
+document.querySelector('#new-season-button').addEventListener('click', async () => {
+  await unlockAudio();
+  audio.ui();
+  await beginNewSeason();
 });
 document.querySelector('#cancel-create').addEventListener('click', () => {
   audio.ui();
@@ -308,6 +415,7 @@ document.querySelector('#confirm-restart').addEventListener('click', async () =>
     showFlash('舊球員資料還沒清掉；新生涯存檔時會再覆蓋。');
   }
   career = null;
+  taughtSwing = false;
   showScreen('create-screen');
 });
 document.querySelector('#cancel-restart').addEventListener('click', () => {
@@ -324,7 +432,21 @@ document.querySelector('#close-about').addEventListener('click', () => {
   aboutDialog.close();
 });
 
+window.addEventListener('keydown', (event) => {
+  if (event.code !== 'Space' && event.code !== 'Enter') return;
+  const gameVisible = !document.querySelector('#game-screen').hidden;
+  if (!gameVisible || !canSwing) return;
+  event.preventDefault();
+  swing();
+});
+
 async function boot() {
+  try {
+    settings = await loadSettings();
+    audio.setEnabled(!settings.muted);
+  } catch {
+    settings = { muted: false };
+  }
   try {
     career = await loadCareer();
   } catch {
