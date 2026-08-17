@@ -1,0 +1,33 @@
+{
+  "version": 1,
+  "rev": "b911356",
+  "files": [
+    "app.js",
+    "assets/baseball-pack/ball-blur.png",
+    "assets/baseball-pack/ball.png",
+    "assets/baseball-pack/bat.png",
+    "assets/baseball-pack/field-lines.png",
+    "assets/baseball-pack/glove-closed.png",
+    "assets/baseball-pack/glove.png",
+    "assets/sfx/bat-hit.ogg",
+    "assets/sfx/catch.ogg",
+    "assets/sfx/cheer.ogg",
+    "assets/sfx/click.ogg",
+    "assets/sfx/homerun.ogg",
+    "assets/sfx/out.ogg",
+    "assets/sfx/swing.ogg",
+    "assets/sfx/win.ogg",
+    "audio.js",
+    "functions.js",
+    "game/batting.js",
+    "game/career.js",
+    "game/data/opponents.js",
+    "game/flavor.js",
+    "game/match.js",
+    "game/persist.js",
+    "game/pitching.js",
+    "game/team-colors.js",
+    "index.html",
+    "styles.css"
+  ]
+}
